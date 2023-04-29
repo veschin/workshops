@@ -230,6 +230,7 @@ while (counter < 5) {
 ;; => (0 1 2 3 4)
 #+end_src
 ** Работа с коллекциями
+*** Map
 #+begin_src java
 List<Integer> integers = List.of(1, 2, 3, 4, 5);
 Function<Integer, Integer> doubleFunction = i -> i * 2;
@@ -254,6 +255,52 @@ integers.stream()
 (map #(* % 2) [1 2 3 4 5])
 ;; => (2 4 6 8 10)
 #+end_src
+
+*** Filter
+#+begin_src java
+Arrays.asList('x', 'y', '2', '3', 'a').stream()
+   .filter(Character::isLetter)
+// ['x', 'y', 'a']
+
+Arrays.asList(1, 2, 3, 4).stream()
+   .filter(x -> x%2 == 1)
+// [1, 3]
+
+Arrays.asList("abc", "", "d").stream()
+   .filter(s -> !s.isEmpty())
+// ["abc", "d"]
+#+end_src
+
+#+begin_src clojure
+(filter #(Character/isLetter %) [\x \y \2 \3 \a])
+;; => (\x \y \a)
+
+(filter #(= (rem % 2) 1) [1 2 3 4])
+;; => (1 3)
+
+(filter not-empty ["abc", "", "d"])
+;; => ("abc" "d")
+#+end_src
+
+*** Reduce
+#+begin_src java
+Arrays.asList(1,2,3).stream()
+    .reduce(0, (x,y) -> x+y)
+// computes (((0+1)+2)+3) to produce the integer 6
+
+Arrays.asList(5, 8, 3, 1).stream()
+    .reduce(Math::max)
+// computes max(max(max(5,8),3),1) and returns an Optional<Integer> value containing 8
+#+end_src
+
+#+begin_src clojure
+(reduce + [1 2 3])
+;; => 6
+
+(reduce max [5 8 3 1])
+;; => 8
+#+end_src
+
 ** Стрелочки
 #+begin_src clojure
 ;; NOTE: эти формы равны между собой.
