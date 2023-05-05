@@ -1,4 +1,6 @@
 #+title: Clojure
+#+author: veschin
+#+language: ru
 
 * Формат мероприятия
 Не совсем верно называть это воркшопом,
@@ -146,16 +148,17 @@ if(true) {
 
 ** Вектор / Vector
 #+begin_src clojure
-(vector 1 2 3 4 5 6)
+(vector 1 :ke H "s" [1 \n] 4 5 6)
 ;;Или
-[1 2 3 4 5 6]
+[1 :ke \H "s" [1 \n] 4 5 6]
 #+end_src
 
 ** Строка / String
 #+begin_src clojure
-(str \H \e \l \l \o 1 2 3)
+(def H \H)
+(str H \e \l \l \o 1 2 3)
 ;;Или
-"Hello123"
+"Hello123\n World"
 #+end_src
 
 ** Кейворд / Keyword
@@ -163,24 +166,35 @@ if(true) {
 (keyword "hello")
 ;; Или
 :hello
+:myns/hello
 #+end_src
 
 ** Мапа / HashMap
 #+begin_src clojure
 (into {} :a 1 :b 2 :c 3)
 ;; Или
-{:a 1
- :b 2
- :c 3}
+(def m
+  {:a 1
+   "b" 2
+   1 1
+   [1 2] '(1 2 3 4)})
+
+(def r (get m :a))
+;; => 1
+(get m "b")
+;; => 2
+(get m 1)
+;; => 1
+(get m [1 2])
+;; => (1 2 3 4)
 #+end_src
 
 ** Сет / Set
 #+begin_src clojure
-(set [1 2 3 4 5])
+(set [1 2 3 4 3 5 5 5])
 ;; Или
 #{1 3 2 5 4}
 #+end_src
-
 
 
 * Козыри пошли
