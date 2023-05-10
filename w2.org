@@ -1,15 +1,57 @@
-#+title: Clojure Воркшоп 1
+#+title: Clojure Воркшоп 2
 #+author: veschin
 #+language: ru
+
+* Дисклеймер
+#+BEGIN_QUOTE
+Чистая совесть дорого стоит. ---Saul Goodman
+#+END_QUOTE
+
+Только попытка научить других показывает, насколько плохо ты сам понимаешь чем занимаешься.
+Я уверен что допустил много глупых неточностей, которые режут слух знающему человеку.
+Но я продолжу идти по граблям.
+
+** Работа над ошибками
+*** Keyword
+Я не нашел подтверждения своим словам про то что каждый кейворд уникальный
+Почитав офф доки, могу исправить определение
+
+Кейворд - константа, как и символ
+ - которая очень дешево тестируется с другими кейвордами,
+ - позволяет расширять семантику за счет неймспейсов
+ - может применяться вместо функции ~get~
+#+begin_src clojure
+(= :a :a)
+;; => true
+
+(= :b/a :b/a)
+;; => true
+
+(= :a :b)
+;; => false
+
+(:a {:a 10})
+;; => 10
+#+end_src
+
+*** Lists
+Из списков можно брать значения по индексу
+#+begin_src clojure
+(nth (list 1 2 3 4 5) 0)
+;; => 1
+#+end_src
+Список - последовательный, связанный список
+Добавляет новые значения в начало списка, а не в конец, как вектор.
+
 
 * Предисловие по языку
 ** Функциональный
 Поощряется функциональный подход.
-Все имеет результат.
-Можно управлять функциями как значениями.
-Можно композировать функции.
+~Все имеет результат~.
+Можно управлять ~функциями как значениями~.
+Можно ~композировать функции~.
 
-Чистая функция - функция, которая ~при одинаковых входных данных~, ~всегда~ дает ~одинаковый результат~
+~Чистая функция~ - функция, которая ~при одинаковых входных данных~, ~всегда~ дает ~одинаковый результат~
 #+begin_src clojure
 (defn pure [a] (+ a a))
 
@@ -49,8 +91,8 @@
 #+end_src
 
 ** Иммутабельный
-Мы не мутируем (перезаписываем) значение переменной.
-Мы создаем копию или меняем ссылку на объект
+Мы ~не мутируем~ (перезаписываем) значение переменной.
+Мы ~создаем копию~ или меняем ссылку на объект
 #+begin_src java
 int i = 5;
 i = 6;
@@ -65,10 +107,53 @@ i = 6;
 [i i*]
 ;; => [5 6]
 #+end_src
-** Структуры персистентные
-Структура данных, как гит репозиторий.
-Хранит значение при инициализации, и шаги воспроизведения.
-Мы редко копируем что-то полностью, чаще мы меняем последние шаги работы со структурой
+** Ленивый
+~Если~ какое то ~значение не используется~
+На него ~не будут затрачены ресурсы~
+
+Но можно заставить вычислить, если мы хотим гарантий в сложных местах
+например функциями ~[doall run! doseq]~
+#+begin_src clojure
+(defmacro bench [& body]
+  `(with-out-str
+     (time
+      ~@body)))
+
+(bench (take 100000 (repeatedly #(rand-int 100))))
+;; => "\"Elapsed time: 0.023464 msecs\"\n"
+;; => "\"Elapsed time: 0.023835 msecs\"\n"
+;; => "\"Elapsed time: 0.046217 msecs\"\n"
+;; => "\"Elapsed time: 0.02632 msecs\"\n"
+
+(bench (doall (take 100000 (repeatedly #(rand-int 100)))))
+;; => "\"Elapsed time: 11.117991 msecs\"\n"
+;; => "\"Elapsed time: 9.675811 msecs\"\n"
+;; => "\"Elapsed time: 5.69942 msecs\"\n"
+;; => "\"Elapsed time: 9.814532 msecs\"\n"
+
+
+(bench
+ (doall
+  (let [a (range 10)
+        b (range 100)])))
+;; => "\"Elapsed time: 0.010209 msecs\"\n"
+;; => "\"Elapsed time: 0.010019 msecs\"\n"
+;; => "\"Elapsed time: 0.006863 msecs\"\n"
+
+(bench
+ (doall
+  (let [a (range 10)
+        b (range 100)]
+    [a b])))
+;; => "\"Elapsed time: 0.058229 msecs\"\n"
+;; => "\"Elapsed time: 0.117121 msecs\"\n"
+;; => "\"Elapsed time: 0.091814 msecs\"\n"
+#+end_src
+
+** Персистентные структуры
+~Структура данных~, как гит репозиторий.
+~Хранит значение при инициализации, и шаги воспроизведения~.
+Мы редко копируем что-то полностью, чаще ~мы меняем последние шаги работы со структурой~
 Поэтому иммутабельность, стоит дешево.
 #+begin_src clojure
 (def v [1 2])
@@ -95,31 +180,278 @@ v4
 ;; => [1 2 3 5]
 #+end_src
 ** Data Driven
+#+BEGIN_QUOTE
+Меня греет мысль, что бриллиант и женщина, надевшая его на палец,
+состоят из одного и того же элемента. ---Walter White
+#+END_QUOTE
+
+~Мы работаем с данными~.
+Мы ~получаем данные~, и мы ~отдаем данные~.
+Иногда чтобы что-то сделать, ~не нужно изобретать абстракцию~
+Почти всегда ~достаточно того, что предлагает язык~.
+
+~Концептуальные ограничения~, делают наш код болле продуманным,
+а следовательно ~надежным и боллее чистым~.
+
+~Синтаксические ограничения~, делают наш код громостским,
+а следовательно ~менее надежным и трудночитаемым~.
+
+*** Примеры
+**** Юзер
+Допустим, мы хотим сделать какого юзера
+Будем хранить его в мапке, не создавая класс или что-то еще
+
+#+begin_src clojure
+(def person
+  {:name  "A"
+   :lname "B"
+   :age   43})
+
+(:age person)
+;; => 43
+
+(def person-with-bdate (assoc person :bdate "10.10.1980"))
+;; => {:name "A", :lname "B", :age 43, :bdate "10.10.1980"}
+
+(def person-with-inced-age (update person-with-bdate :age inc))
+;; => {:name "A", :lname "B", :age 44}
+#+end_src
+**** Много юзеров
+Допустим, идея с юзерам понравилась бизнесу, и мы должны хранить много юзеров
+Теперь у нас будет функция, чтобы сделать из разных данных, юзера
+#+begin_src clojure
+(defn ->person [& [name lname age bdate]]
+  {:name  name
+   :lname lname
+   :age   age
+   :bdate bdate})
+
+(->person "C" "D" 44 "10.10.1979")
+;; => {:name "C", :lname "D", :age 44, :bdate "10.10.1979"}
+
+(->person "V" "F" 45 "10.10.1978")
+;; => {:name "V", :lname "F", :age 45, :bdate "10.10.1978"}
+#+end_src
+
+**** Юзер в SQL
+В какой то момент, мы поняли что все равно будем хранить в базе
+И написали функцию, которая перевод хэшмапу в валидный ~SQL запрос~
 #+begin_src clojure
 
-;; ---- MAP
-(def m {:a 10 :b 20})
-;; => #'user/m
+(require '[clojure.string :as str])
+(defn sql-for-persons [person]
+  (format "INSERT INTO PERSONS %s VALUES %s;"
+          (seq (mapv name (keys person)))
+          (vals person)))
 
-(def m+c+d (assoc m :c 30 :d 40))
-;; => {:a 10 :b 20 :c 30 :d 40}
+(sql-for-persons (->person "V" "F" 45 "10.10.1978"))
+;; => "INSERT INTO PERSONS (\"name\" \"lname\" \"age\" \"bdate\") VALUES (\"V\" \"F\" 45 \"10.10.1978\");"
+#+end_src
 
-(def m+c-d (dissoc m :d))
-;; => {:a 10 :b 20 :c 30}
+**** Валидация
+Плохо жить без валидации
+Мы сделали функцию ~validate!~, которая принимает хэшмапы,
+с набором ключей и функциями, которые нужно применить к ключам
 
-;; ---- VEC
+Сделали хэшмапу ~person?~ которая хранит в себе ключи и функции для них
+#+begin_src clojure
+(def person?
+  {:name string?
+   :lname string?
+   :age int?
+   :bdate string?})
 
-(def v [1 2 3 4])
-;; => #'user/v
+(defn validate! [vmap data]
+  (not (some (fn [[k v]] (not ((k vmap) v))) data)))
 
-(def inced (map inc v))
-;; => (2 3 4 5)
+(validate! person? (->person "C" "D" 44 "10.10.1979"))
+;; => true
+#+end_src
 
-;; ---- CODE
-(-> (list 'def 'k 10) ;; => ('def 'k 10)
-    (str) ;; => "(def k 10)"
-    (eval)) ;; => #'user/k
 
+В какой то момент мы поняли что для некоторых юзеров у нас другая логика валидации
+Как удобно, что мы заложили разные мапы-валидации на этапе проектирования
+#+begin_src clojure
+(def person?*
+  {:name string?
+   :lname string?
+   :age (some-fn nil? int?)
+   :bdate (some-fn nil? string?)})
+
+(validate! person?* (->person "C" "D"))
+;; => true
+
+(validate! person? (->person "C" "D"))
+;; => false
+#+end_src
+
+*** История одного проекта
+Как то довелось мне писать движок 2D графики на голом DOM дереве в JavaScript
+(~CLJS~ ~SVG API~ ~vDOM~ ~React|Reagent~)
+Это был проект с большой кодовой базой, где я развлекался в создании велосипедов
+От самописных ORM'ок до систем группировок для виртуального DOM
+(Это был сложный технический калькулятор, посредством визуального программирования, как фигма)
+
+Самым большим профитом ~Clojure/ClojureScript~ была возможность превращать громостские данные, в очень удобные структуры
+
+**** Генерация SVG элементов из мап
+Из обычных хэшмап
+#+begin_src clojure
+(def css-for-rect [rect]
+  {:width  :0.5vw
+   :height :1vh
+   :color  (random-color)})
+
+{:shape :rect
+ :id    :shape1}
+
+#+end_src
+
+#+begin_src html
+<svg>
+  <rect class="rect" id="shape1">
+</svg>
+#+end_src
+
+#+begin_src css
+.rect {
+    width:  0.5vw;
+    height: 1vh;
+}
+
+#shape1 {color: "#000";}
+#+end_src
+
+**** Масштабирование
+#+begin_src clojure
+(def state
+  [{:shape :rect
+    :id    :shape1}
+   {:shape :circle
+    :id    :shape2}
+   {:shape :star
+    :id    :shape3}
+   {:shape :triangle
+    :id    :shape4}])
+
+(render-shapes! state)
+#+end_src
+
+#+begin_src html
+<svg>
+  <rect class="rect" id="shape1">
+  <circle id="shape2">
+  <star id="shape3">
+  <triangle id="shape4">
+</svg>
+#+end_src
+
+**** Вложенность
+Со временем появилась потребность в во вложенных фигурах:
+ - с наследованием позиций на странице
+ - или стилей
+ - или особым порядком
+ - или высшим приоритетом
+
+#+begin_src clojure
+(def state
+  [{:shape :rect
+    :id    :shape1
+    :order 0
+    :parent :shape4
+    :children [:shape2 :shape3]}
+   {:shape :circle
+    :id    :shape2}
+   {:shape :star
+    :id    :shape3}
+   {:shape :triangle
+    :id    :shape4}])
+#+end_src
+
+#+begin_src clojure
+
+(defn render! [& shapes]
+  (-> shapes
+      (sort-by-order)
+      (create-pretty-stuff)
+      (generate-links)
+      (compute-values)
+      (optimize)
+      (render)))
+
+#+end_src
+
+#+begin_src html
+<svg>
+  <triangle id="shape4">
+  <!-- rect-triangle -->
+  <line/>
+  <!-- to-circle -->
+  <line/>
+  <!-- to-star -->
+  <line/>
+  <div id="group">
+    <rect class="rect" id="shape1">
+    <circle id="shape2">
+    <star id="shape3">
+  </div>
+</svg>
+#+end_src
+**** DSL
+Cтруктуры росли в размерах и сложности обхода
+Могли быть рекурсивными, с разными опциями обхода
+
+В конце концов родился мини-язык внутри мини языка
+#+begin_src clojure
+(def state
+  [{:shape :rect
+    :id    :shape1
+    :order 0
+    :parent :shape4
+    :children [:shape2 :shape3]}
+   {:shape :circle
+    :id    :shape2
+    :opts {:x 0
+           :y 50}}
+   {:shape :star
+    :id    :shape3
+    :opts {:x 10
+           :y 50}}
+   {:shape :triangle
+    :id    :shape4}])
+
+(defn transform-in [path fn-map val]
+   (-> (parse-path path)
+       (apply-fn-map val)
+       (reduce-back)))
+
+(transform-in
+ [:shape1 :children :coll/all]
+ {:opts {:x #(+ 100 %)
+         :y #(/ % 2)}
+  :order inc
+  :links :shape1}
+ state)
+
+;; [{:shape :rect
+;;   :id    :shape1
+;;   :order 0
+;;   :parent :shape4
+;;   :children [:shape2 :shape3]}
+;;  {:shape :circle
+;;   :id    :shape2
+;;   :order 1
+;;   :opts {:x 100
+;;          :y 25}
+;;   :links :shape1}
+;;  {:shape :star
+;;   :id    :shape3
+;;   :order 1
+;;   :opts {:x 110
+;;          :y 25}
+;;   :links :shape1}
+;;  {:shape :triangle
+;;   :id    :shape4}]
 #+end_src
 
 
@@ -148,6 +480,7 @@ v4
 Функция ~print~ принимает результат вычисления выражения и печатает его пользователю
 ** L oop
 Бесконечный цикл (~loop~), начинается сначала
+
 
 
 * Козыри пошли
@@ -311,6 +644,7 @@ Arrays.asList(5, 8, 3, 1).stream()
      (count) ;; => 6
      (+ 1)) ;; => 7
 #+end_src
+
 
 
 * Задачи
@@ -665,6 +999,7 @@ Math/PI
     (.getMessage e))
   (finally ()))
 #+end_src
+
 
 
 
