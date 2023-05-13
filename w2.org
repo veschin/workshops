@@ -825,6 +825,8 @@ inverse(Map<? extends K, ? extends V> map) {
 #+end_src
 
 ** oop
+# Советую почитать эту статью
+# https://habr.com/ru/articles/733400/
 Реализовать иерархию классов, описывающую трёхмерные фигуры
 
 как я понял, смысл ооп в данном случае в том что
@@ -834,6 +836,7 @@ inverse(Map<? extends K, ? extends V> map) {
 есть 3 класса, которые наследуются от базовых
 нужно реализовать коробку, которая понимает, влезет ли фигура в нее
 #+begin_src java
+// https://habr.com/ru/articles/440436/
 class Shape {
     private double volume;
 
