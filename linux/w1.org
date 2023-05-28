@@ -1,0 +1,201 @@
+#+title: Linux Environment Воркшоп
+#+author: veschin
+#+language: ru
+
+* Зависимости
+#+begin_src bash
+# FEDORA
+sudo dnf install bspwm sxhkd polybar fish feh rofi dunst
+# DEBIAN LIKE
+sudo apt install bspwm sxhkd polybar fish feh rofi dunst
+# ARCH
+sudo pacman -S bspwm sxhkd polybar fish feh rofi dunst
+#+end_src
+** .xinitrc
+#+begin_src unix
+sxhkd &
+exec bspwm
+#+end_src
+
+* BSPWM
+#+begin_quote
+Tiling window manager that represents windows as the leaves of a full binary tree
+#+end_quote
+** Tiling
+Разбиение рабочего пространства на прямоугольные окна
+** Entrypoint
+#+begin_src
+#! /bin/sh
+pgrep -x sxhkd > /dev/null || sxhkd &
+#+end_src
+** Colors
+#+begin_src
+# ----COLORS FROM PYWAL
+. "${HOME}/.cache/wal/colors.sh"
+bspc config normal_border_color "$color1"
+bspc config active_border_color "$color2"
+bspc config focused_border_color "$color15"
+bspc config presel_feedback_color "$color1"
+#+end_src
+** Dunst
+#+begin_src
+# ----DUNST
+pkill dunst
+dunst &
+#+end_src
+** Mounts
+#+begin_src
+# ----MOUNTS
+sudo mount /dev/sdb2 $HOME/win/hdd/
+sudo mount /dev/nvme0n1p4 $HOME/win/ssd/
+sudo mount /dev/sda2 $HOME/win/ssd2/
+#+end_src
+** BSPC
+#+begin_src
+# ----BSPC DEFAULTS
+# bspc monitor HDMI-A-0 -d 5 6
+bspc monitor DisplayPort-2 -d 1 2 3 4
+
+xrandr --output DisplayPort-2 --mode 3440x1440 -r 165 --left-of HDMI-A-0
+# xrandr --output HDMI-A-0 --mode 1920x1080 -r 144
+
+bspc config border_width         5
+bspc config window_gap          15
+
+bspc config split_ratio          0.52
+bspc config borderless_monocle   true
+bspc config gapless_monocle      true
+#+end_src
+** Exec's
+#+begin_src
+# ----CUSTOM EXEC'S
+wallpaper=`find ~/wallpapers/ | sort -R | head -1`
+wal -i $wallpaper -n
+feh --bg-fill $wallpaper --bg-fill $wallpaper
+killall -q polybar
+polybar &
+setxkbmap -option grp:alt_shift_toggle us,ru &
+/home/veschin/chrome-pywal/generate-theme.sh
+#+end_src
+** Rules
+#+begin_src
+# ----RULES
+# bspc rule -a Google-chrome desktop=3
+bspc rule -a TelegramDesktop:telegram-desktop desktop=2
+bspc rule -a discord desktop=3
+bspc rule -a Peek state=floating follow=on focus=on
+#+end_src
+
+
+* SXHKD
+#+begin_quote
+Simple X hotkey daemon
+#+end_quote
+** Utils
+#+begin_src
+# ----UTILS KEYS
+super + Return
+	konsole
+
+Print
+	flameshot gui
+
+super + space
+	rofi -show drun
+
+alt + space
+	rofi -show run
+#+end_src
+** Bspc
+#+begin_src
+# ----BSPC KEYS
+super + {Left,Down,Up,Right}
+	bspc node -s {west,south,north,east}
+
+# alt + {Left,Down,Up,Right}
+	# bspc node -f {west,south,north,east}
+
+alt + Tab
+	bspc node -f next.local.window
+
+shift + Tab
+	bspc desktop -f next
+
+super + shift + r
+	bspc wm -r && pkill -USR1 -x sxhkd
+
+super + v
+    /home/veschin/.config/polybar/vpnc.sh &
+
+super + w
+	bspc node -c
+
+super + {_,alt +} {0-9}
+	bspc {desktop -f,node -d} {0-9}
+
+super + f
+    if [ -z "$(bspc query -N -n focused.floating)" ]; then \
+        bspc node focused -t floating; \
+    else \
+        bspc node focused -t tiled; \
+    fi
+
+# shift + {Left,Down,Up,Right}
+# 	bspc node -z {left -10 0,bottom 0 -10,top 0 10,right 10 0}
+#+end_src
+** Fn's
+#+begin_src
+# ----FUNCTION KEYS
+XF86Audio{RaiseVolume,LowerVolume}
+	pactl set-sink-volume 0 {+5%, -5%}
+
+XF86AudioMute
+	pactl set-sink-mute 0 toggle
+
+XF86MonBrightness{Up,Down}
+	xbacklight {-inc, -dec} 10
+#+end_src
+
+
+* Polybar
+#+begin_quote
+A fast and easy-to-use status bar
+#+end_quote
+** Bar
+#+begin_src ini
+modules-center = play-prev music-now play-next
+modules-left = xworkspaces xwindow
+modules-right = vpn totp filesystem pulseaudio xkeyboard memory cpu
+#+end_src
+** Custom modules
+#+begin_src ini
+[module/vpn]
+type = custom/script
+format-background = ${colors.primary}
+format-padding = 2
+exec = "echo VPN-enabled"
+exec-if = "nmcli con | grep -q tun0"
+interval = 3
+#+end_src
+* Fish
+#+begin_quote
+Smart and user-friendly command line shell
+#+end_quote
+** VS Bash
+#+begin_src bash
+export var = ""
+alias a = ""
+command
+#+end_src
+
+#+begin_src fish
+set -x var ""
+alias a ""
+command
+#+end_src
+
+* PyWal + Feh
+
+* Rofi
+
+* Dunst
