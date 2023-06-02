@@ -472,8 +472,20 @@ Arrays.asList(5, 8, 3, 1).stream()
 (reduce max [5 8 3 1])
 ;; => 8
 #+end_src
-** Рекурсия
+*** Рекурсия
+#+begin_src clojure
+(loop []
+  (recur))
 
+(fn []
+  (recur))
+
+(fn some-fn []
+  (some-fn))
+
+(defn some-fn []
+  (some-fn))
+#+end_src
 
 * Реальный кейс
 Нужно получить набор данных
