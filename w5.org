@@ -1,0 +1,83 @@
+#+title: Clojure Воркшоп 5
+#+author: veschin
+#+language: ru
+
+* tools.deps
+** Что это?
+Часть пакета тулинга Clojure которая описывает инфраструктуру проекта
+В возможности входит
+- гибкое расширение через алиасы
+- сборка джавовых и кложурных зависимостей через mvn, git, s3, local fs jar.
+
+https://clojure.org/guides/deps_and_cli
+** install
+#+begin_src bash
+# debian like
+sudo apt install rlwrap clojure
+# redhat like
+sudo dnf install rlwrap clojure
+# macos
+sudo brew install rlwrap clojure
+#+end_src
+** deps.edn
+#+begin_src clojure
+{:deps {}
+ :paths ["src" "resources"]
+ :aliases {}}
+#+end_src
+** deps
+#+begin_src clojure
+{org.clojure/core.async      {:mvn/version "1.3.610"}
+ my/lib                      {:local/root "/tmp/lib"}
+ io.github.yourname/time-lib {:git/tag "v0.0.1"
+                              :git/sha "4c4a34d"}}
+#+end_src
+** aliases
+#+begin_src clojure
+{:a {:exec-fn user/fn
+     :jvm-opts ["-Dmb.run.mode=test"]
+     :exec-args {:a1 ""
+                 :a2 ""}}}
+#+end_src
+
+#+begin_src clojure
+{:b {:extra-paths ["test"]
+     :main-opts ["a" "b" "c"]}}
+#+end_src
+
+#+begin_src clojure
+{:c {:extra-deps {}}}
+#+end_src
+
+#+begin_src bash
+clj -M:a:b:c
+clojure -M:a:b:c
+#+end_src
+
+
+* tools.build
+** Что это?
+Часть пакета тулинга Clojure которая описывает билд проекта
+В возможности входит
+- гибкая сборка сурсов
+- отличный доступ к файловой системе посредством Clojure
+- поддержка транзитивных зависимостей
+
+https://github.com/clojure/tools.build
+* Web Server
+** Ring
+Data Driven библиотека имплементирующая HTTP протокол
+Помимо прочего хороший референс того как следует строить web-системы
+- функционал разбит по мелким либам
+- отличный набор хелперов, врапперов
+- отличная поддержка ~coerce~
+
+https://github.com/ring-clojure/ring
+** Jetty Server
+Простенький Java веб-сервер.
+На 99% верный выбор для любого пет проекта
+
+* Rest testing
+#+begin_src restclient
+GET http://localhost:3000/
+#+end_src
