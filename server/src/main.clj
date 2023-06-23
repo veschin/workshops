@@ -3,18 +3,25 @@
   (:gen-class)
   (:require [ring.adapter.jetty :as jetty]))
 
-(defn handler [_request]
-  {:status  200
-   :headers {"Content-Type" "text/plain"}
-   :body    "Ok"})
+
+(defn find-route [{uri :uri}]
+  (case uri
+    "/test" {:status 200
+             :header {"Content-Type" "text/plain"}
+             :body   "Test"}
+    "/"     {:status 200
+             :header {"Content-Type" "text/plain"}
+             :body   (apply str (repeatedly 10 #(rand-int 10)))}
+    {:status 200
+     :body   "404"}))
 
 (defonce server
   (jetty/run-jetty
-   #'handler
+   #'find-route
    {:port 3000
     :join? false}))
 
-(defn -main []
+(defn -main [& _]
   (.start server))
 
 (comment
