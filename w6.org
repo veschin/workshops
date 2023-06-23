@@ -1,0 +1,44 @@
+#+title: Clojure Воркшоп 6
+#+author: veschin
+#+language: ru
+
+* JDBC
+JDBC (англ. Java DataBase Connectivity — соединение с базами данных на Java)
+платформенно независимый промышленный стандарт взаимодействия Java-приложений с различными СУБД,
+реализованный в виде пакета java.sql, входящего в состав Java SE.
+
+* Подготовка
+#+begin_src bash :results none
+docker run \
+    --name wpostgres \
+    --rm -d \
+    -p 5432:5432 \
+    -e POSTGRES_PASSWORD=postgres \
+    postgres
+#+end_src
+
+#+begin_src bash :results none
+echo "CREATE DATABASE workshop;" | docker exec -i wpostgres psql -U postgres
+#+end_src
+
+#+begin_src bash :results none
+docker stop wpostgres
+#+end_src
+
+* Clojure JDBC
+Низкоуровневая Data Driven обертка над JDBC
+- SQL
+- DDL
+
+https://clojure-doc.org/articles/ecosystem/java_jdbc/home/
+
+* HoneySQL
+Инструмент для превращения структур в готовый SQL
+
+https://github.com/seancorfield/honeysql
+
+* Toucan
+Высокоуровневый инструмент для работы с СУБД
+Почти ORM
+
+https://github.com/metabase/toucan
