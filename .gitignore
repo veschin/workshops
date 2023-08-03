@@ -9,3 +9,4 @@ server/.cpcache
 server/.lsp
 server/.nrepl-port
 server/target
+server/resources/sites
