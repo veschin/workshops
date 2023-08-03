@@ -1,0 +1,131 @@
+#+title: Emacs Doom Воркшоп 2
+#+author: veschin
+#+language: ru
+
+* Установка
+** Зависимости [0/4]
+- [ ] git
+- [ ] emacs
+- [ ] ripgrep
+- [ ] fd
+#+begin_src bash
+brew install git emacs-plus@29 ripgrep fd
+# or
+sudo apt-get install git emacs ripgrep fd
+
+sudo dnf install git emacs ripgrep fd
+#+end_src
+** Doom
+#+begin_src bash
+git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
+~/.config/emacs/bin/doom install
+#+end_src
+
+
+* Emacs
+** Doom Doctor
+** Пакеты
+** Настройка
+*** EmacsLisp
+Просто рандомные функции, чтобы вы не пугались, когда увидите
+#+begin_src elisp
+(defun my-function ()
+  "This function prints 'Hello, world!'."
+  (message "Hello, world!"))
+
+(setq my-variable "Hello, world!")
+
+(while (< my-counter 10)
+  (message "The counter is %d." my-counter)
+  (setq my-counter (+ my-counter 1)))
+
+(if (> my-number 10)
+    (message "The number is greater than 10.")
+    (message "The number is less than or equal to 10."))
+
+(defun print-date-and-time ()
+  (message "The current date and time is: %s"
+           (format-time-string "%Y-%m-%d %H:%M:%S")))
+#+end_src
+*** Configs
+В ~doom~ директории, лежит файл ~config.el~
+В нем можно писать все свои настройки
+#+begin_src emacs-lisp
+(setq doom-font "Source Code Pro"
+      doom-font-size 14
+      doom-theme "doom-one")
+#+end_src
+*** Шорткаты
+#+begin_src emacs-lisp
+(map!
+ "M-w" #'switch-window
+ "M-m" #'comment-line
+ "s-m" #'comment-line
+ "s-k" #'kill-buffer
+ "C-s" #'toggle-input-method
+ :leader
+ ("<escape>" #'evil-switch-to-windows-last-buffer
+  "r" (lambda (by)
+        (interactive "sWrap by: ")
+        (goto-char (region-beginning))
+        (insert by)
+        (goto-char (region-end))
+        (insert by))
+  ","   #'switch-to-buffer
+  "RET" #'newline))
+#+end_src
+*** Настройки
+#+begin_src emacs-lisp
+(setq doom-theme
+      'doom-ayu-mirage
+      ;; 'doom-plain
+      ;; 'doom-plain-dark
+      ;; 'doom-spacegrey
+      ;; 'doom-henna
+      ;; 'doom-flatwhite
+      ;; 'doom-wilmersdorf
+      doom-font (font-spec
+                 :family "agave Nerd Font Mono"
+                 ;; :family "Iosevka Nerd Font Mono"
+                 :weight 'normal)
+      )
+
+(setq doom-unicode-font doom-font)
+
+(setq sml/no-confirm-load-theme t)
+
+(setq-default truncate-lines t)
+
+(setq display-line-numbers-type t)
+
+(setq window-divider-default-left-width 5
+      window-divider-default-right-width 5
+      window-divider-default-bottom-width 5)
+
+(setq org-directory "~/org/")
+(setq flycheck-check-syntax-automatically '(save mode-enabled))
+(setq lsp-idle-delay 0.05)
+(setq projectile-create-missing-test-files t)
+
+(xclip-mode t)
+(elcord-mode)
+#+end_src
+** Org Mode
+- ~*~ Заголовок
+- ~-~ Элемент списка
+- ~#+begin_src #+end_src~ Код блок
+
+
+* Базовый мувмент
+** M-x
+** S-x
+** SPC / C
+
+* LSP
+** Зависимости
+** Переименование
+** Поиск сущностей
+
+* Работа с проектами
+** Neil
+** Dired
