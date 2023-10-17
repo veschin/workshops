@@ -1,0 +1,175 @@
+#+title: Emacs Doom Воркшоп 3
+#+author: veschin
+#+language: ru
+* Вступление
+#+begin_quote
+Your life in plain text
+#+end_quote
+
+A GNU Emacs major mode for keeping notes, authoring documents, computational notebooks, literate programming, maintaining to-do lists, planning projects, and more — in a fast and effective plain text system.
+- [[https://orgmode.org/][офф сайт]]
+- [[https://orgmode.org/tools.html][интеграции]]
+- [[https://orgmode.org/manual/Markup-for-Rich-Contents.html][офф дока разметки]]
+** Цитаты
+#+begin_quote
+Let's just say I know a guy who knows a guy,
+who knows another guy. -- Saul Goodman
+#+end_quote
+
+#+begin_quote
+Believe me, there's no honor among thieves.
+Except for us, of course. -- Saul Goodman
+#+end_quote
+
+#+begin_quote
+Conscience gets expensive, doesn't it? -- Saul Goodman
+#+end_quote
+* Meta
+- #+title
+- #+author
+- #+begin_src #+end_src
+- #+begin_quote #+end_quote
+* Prose
+** Text
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
+
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat
+
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+** Heading
+*** H3
+**** H4
+***** H5
+****** H6
+******* H7
+** List
+- a
+- b
+- c
+
+
++ a
++ b
++ c
+
+
+1. a
+2. b
+3. c
+** Link
+- [[https://www.youtube.com/][youtube.com]]
+- [[https://www.youtube.com/][still youtube]]
+- [[~/workshops/emacs/w2.org][last workshop]]
+- [[Heading][Heading]]
+** Markup
+[[https://orgmode.org/manual/Emphasis-and-Monospace.html][from]]
+
+/One may expect this whole sentence to be italicized, but the
+following ~user/?variable~ contains =/= character, which effectively
+stops emphasis there./
+
+- ~code~
+- =verbatim=
+- /italic/
+- *bold*
+- _underline_
+- +strike-through+
+** Subscripts n Superscripts
+[[https://orgmode.org/manual/Subscripts-and-Superscripts.html][from]]
+
+~org-toggle-pretty-entities~
+
+The radius of the sun is R_sun = 6.96 x 10^8 m.  On the other hand,
+the radius of Alpha Centauri is R_{Alpha Centauri} = 1.28 x R_{sun}.
+** Table
+[[https://orgmode.org/worg/org-tutorials/tables.html][from]]
+
+*** Simple table
+| heading1 | heading2 | headin3 |
+|          |          |         |
+|          |          |         |
+
+*** From comma
+~C-c |~
+1,2,3,4
+* Code
+** Babel
+[[https://o     rgmode.org/worg/org-contrib/babel/intro.html][from]]
+
+Babel is about letting many different languages work together. Programming languages live in code blocks inside natural language Org documents.
+** Results
+*** Random floats
+#+begin_src clojure
+(repeatedly 3 #(rand 10))
+#+end_src
+
+#+RESULTS:
+| 6.503512433970936 | 7.362478384334002 | 9.060041267568812 |
+
+*** Read this file title
+#+name: pwd*
+#+begin_src bash :cache yes
+pwd
+#+end_src
+
+
+#+name: read-pwd
+#+begin_src clojure :var dir=pwd*
+(->> (str dir "/w3.org")
+     (slurp)
+     (take 29)
+     (apply str))
+#+end_src
+
+#+RESULTS: read-pwd
+: #+title: Emacs Doom Воркшоп 3
+
+*** Python + Clojure
+#+name: python
+#+begin_src python
+list = [x for x in range(10)]
+return list
+#+end_src
+
+#+RESULTS: python
+| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+
+#+name: clojure
+#+begin_src clojure :var p=python :results verbatim
+(mapv inc p)
+#+end_src
+
+#+RESULTS: clojure
+: [1 2 3 4 5 6 7 8 9 10]
+* Планирование
+~SPC m t~
+~org-todo~
+** PROJ My Project
+*** TODO [#A] hot task [1/2]
+- [X] hot step
+- [ ] hot step
+*** TODO [#B] medium task [40%]
+- [-] step 1
+  - [X] substep
+  - [X] substep
+  - [ ] substep
+- [ ] step 2
+- [X] step 3
+- [X] step 4
+- [ ] step 5
+*** TODO [#C] task
+*** IDEA possible feature task
+*** HOLD backlog task
+** PROJ My Agenda
+*** TODO [#B] Talk to A
+<2023-10-17 Tue>
+Very important talk about project
+*** TODO Talk to B
+<2023-10-28 Sat>
+*** TODO Talk to C
+<2023-11-14 Tue>
+* Экспорт
+* Альтернативы Emacs Org
+- [[https://github.com/vscode-org-mode/vscode-org-mode][VsCode]]
+- [[https://plugins.jetbrains.com/plugin/7095-org4idea][IDEA]]
+- [[https://github.com/ihdavids/orgextended][Sublime]]
