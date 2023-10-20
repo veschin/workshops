@@ -1,6 +1,7 @@
 #+title: Emacs Doom Воркшоп 3
 #+author: veschin
 #+language: ru
+
 * Вступление
 #+begin_quote
 Your life in plain text
@@ -96,7 +97,8 @@ the radius of Alpha Centauri is R_{Alpha Centauri} = 1.28 x R_{sun}.
 ** Babel
 [[https://o     rgmode.org/worg/org-contrib/babel/intro.html][from]]
 
-Babel is about letting many different languages work together. Programming languages live in code blocks inside natural language Org documents.
+Babel is about letting many different languages work together.
+Programming languages live in code blocks inside natural language Org documents.
 ** Results
 *** Random floats
 #+begin_src clojure
@@ -141,6 +143,21 @@ return list
 
 #+RESULTS: clojure
 : [1 2 3 4 5 6 7 8 9 10]
+
+#+begin_src java
+public static int su() {
+    int x = 10;
+    return x;
+}
+
+public static void main(String[] args) {
+    System.out.println(su());
+}
+#+end_src
+
+#+RESULTS:
+: 10
+
 * Планирование
 ~SPC m t~
 ~org-todo~
@@ -169,6 +186,19 @@ Very important talk about project
 *** TODO Talk to C
 <2023-11-14 Tue>
 * Экспорт
+[[https://pandoc.org/][pandoc]]
+- texlive
+#+begin_src bash
+
+# org -> pdf
+pandoc --pdf-engine=xelatex -f org -t pdf -o _.pdf _.org
+
+# org -> md
+pandoc -f org -t md -o _.md _.org
+
+# org -> md
+pandoc -f org -t docx -o _.docx _.org
+#+end_src
 * Альтернативы Emacs Org
 - [[https://github.com/vscode-org-mode/vscode-org-mode][VsCode]]
 - [[https://plugins.jetbrains.com/plugin/7095-org4idea][IDEA]]
