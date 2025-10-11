@@ -1,0 +1,87 @@
+* Примеры проблем
+** Глубокое вложенное состояние
+Frontend-приложениям часто нужно обновлять глубоко вложенные данные в состоянии. Это приводит к многословному коду и ошибкам при ручном управлении иммутабельностью [[https://react.dev/learn/updating-objects-in-state][React docs on nested state]].
+
+| Стек          | Решена проблема |
+|---------------+-----------------|
+| React         | Нет             |
+| Vue           | Нет             |
+| ClojureScript | Да              |
+
+В ClojureScript проблема решена благодаря иммутабельным структурам данных и функции assoc-in, которая позволяет декларативно обновлять вложенные значения без ручного копирования объектов.
+
+Ссылка на примеры: [[file:01-nested-state/][Код]]
+** useEffect ад
+Управление побочными эффектами в компонентах сложно из-за зависимостей, замыканий и бесконечных циклов перерендера [[https://overreacted.io/a-complete-guide-to-useeffect/][Complete guide to useEffect]].
+
+| Стек          | Решена проблема |
+|---------------+-----------------|
+| React         | Нет             |
+| Vue           | Нет             |
+| ClojureScript | Да              |
+
+В ClojureScript проблема решена благодаря реактивным атомам и функции add-watch, которая автоматически отслеживает изменения состояния без необходимости управлять зависимостями вручную.
+
+Ссылка на примеры: [[file:02-useeffect-hell/][Код]]
+** Реактивные ловушки
+Деструктуризация и другие операции могут случайно сломать реактивность, приводя к несогласованным состояниям UI [[https://vuejs.org/guide/essentials/reactivity-fundamentals.html][Vue reactivity fundamentals]].
+
+| Стек          | Решена проблема |
+|---------------+-----------------|
+| React         | Нет             |
+| Vue           | Нет             |
+| ClojureScript | Да              |
+
+В ClojureScript проблема решена благодаря строгой иммутабельности - все изменения состояния создают новые структуры данных, гарантируя согласованность и отсутствие побочных эффектов от деструктуризации.
+
+Ссылка на примеры: [[file:03-reactivity-footguns/][Код]]
+** Производительность
+Компоненты часто перерендериваются зря, требуя ручной оптимизации производительности [[https://react.dev/learn/render-and-commit][React render optimization]].
+
+| Стек          | Решена проблема |
+|---------------+-----------------|
+| React         | Нет             |
+| Vue           | Нет             |
+| ClojureScript | Да              |
+
+В ClojureScript проблема решена благодаря структурному разделению данных - система автоматически определяет, какие части UI нужно обновить, без необходимости ручных оптимизаций типа memo или useCallback.
+
+Ссылка на примеры: [[file:04-performance-memo/][Код]]
+
+** Валидация времени выполнения
+Проверка данных на корректность требует дополнительных библиотек и ручной работы [[https://www.reddit.com/r/react/comments/ur54er/typescript_has_no_runtime_validation/][TypeScript runtime limitations]].
+
+В ClojureScript проблема решена благодаря встроенным библиотекам spec и malli, которые предоставляют декларативную валидацию данных во время выполнения с подробными сообщениями об ошибках.
+
+Ссылка на примеры: [[file:05-runtime-validation/][Код]]
+
+** Общий код
+Логика приложения дублируется между frontend и backend, усложняя поддержку и синхронизацию [[https://martinfowler.com/bliki/TwoHardThings.html][Two hard things in programming]].
+
+| Стек          | Решена проблема |
+|---------------+-----------------|
+| React         | Нет             |
+| Vue           | Нет             |
+| ClojureScript | Да              |
+
+В ClojureScript проблема решена благодаря файлам .cljc, которые компилируются как для JVM (backend), так и для JavaScript (frontend), позволяя писать общую логику один раз.
+
+Ссылка на примеры: [[file:06-shared-code/][Код]]
+
+** Live Coding: TODO App
+Простое TODO-приложение демонстрирует state management, композицию и REPL-workflow (add/toggle/filter/delete, persistence).
+Ссылка на примеры: [[file:08-live-coding/problem.react.tsx][React]] [[file:08-live-coding/problem.vue.ts][Vue]] [[file:08-live-coding/todo-app.cljs][CLJS]]
+
+** Interop: npm Packages (MUI/Vuetify)
+Интеграция JS-библиотек (React/Vue-specific).
+
+CLJS импортирует/оборачивает либы, без ограничений.
+
+Ссылка на примеры: [[file:09-react-mui/problem.react.tsx][React MUI]] [[file:09-react-mui/solution.cljs][CLJS MUI]] [[file:09-vue-vuetify/problem.vue.ts][Vue Vuetify]] [[file:09-vue-vuetify/solution.cljs][CLJS Vuetify]]
+
+** Синтаксический сахар
+Язык предоставляет мощные конструкции для лаконичного и выразительного кода без аналогов в JS/TS [[https://clojure.org/about/functional_programming][Clojure functional programming]].
+
+В ClojureScript проблема решена благодаря богатому набору встроенных макросов (threading, destructuring) и функций высшего порядка (comp, partial), которые позволяют писать выразительный код без внешних утилит.
+
+Ссылка на примеры: [[file:07-syntactic-sugar/][Код]]

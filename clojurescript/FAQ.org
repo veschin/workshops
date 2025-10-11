@@ -1,0 +1,907 @@
+* ClojureScript FAQ
+:PROPERTIES:
+:CUSTOM_ID: clojurescript-faq
+:END:
+** Язык и синтаксис
+:PROPERTIES:
+:CUSTOM_ID: язык-и-синтаксис
+:END:
+*** Зачем столько скобок?
+:PROPERTIES:
+:CUSTOM_ID: зачем-столько-скобок
+:END:
+Скобки в Clojure/ClojureScript - это не баг, а фича. Код в CLJS - это
+данные (homoiconicity), что позволяет писать макросы - код, который
+генерирует код во время компиляции. Как только вы привыкаете к правилам
+отступов и используете правильный редактор (с paredit/parinfer), скобки
+перестают быть проблемой и становятся преимуществом - вам не нужно
+помнить различия между ={}=, =[]=, =()= как в других языках.
+
+На практике современные редакторы (VSCode с Calva, IntelliJ с Cursive,
+Emacs) автоматически управляют скобками, и вы их практически не
+замечаете.
+
+*** Есть ли аналог TypeScript для ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: есть-ли-аналог-typescript-для-clojurescript
+:END:
+Нет прямого аналога TypeScript, и он не нужен по нескольким причинам:
+
+1. *Runtime validation*: В CLJS есть =clojure.spec= и =malli= -
+   библиотеки для валидации данных во время выполнения, а не только
+   компиляции. Вы можете проверять данные на входе/выходе функций, в
+   API, в состоянии приложения.
+
+2. *Immutable data structures*: Многие баги, которые TypeScript пытается
+   предотвратить, просто невозможны в CLJS из-за неизменяемости данных.
+
+3. *REPL-driven development*: Вы тестируете функции в REPL с реальными
+   данными сразу при написании кода, что ловит ошибки раньше чем
+   TypeScript.
+
+Если вам нужна статическая типизация, есть экспериментальные проекты
+(typed-clojure), но большинство разработчиков обходятся spec + REPL.
+
+*** Сколько времени занимает изучение ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: сколько-времени-занимает-изучение-clojurescript
+:END:
+*Базовый синтаксис*: 1-2 недели для чтения и понимания кода.
+
+*Написание простых приложений*: 1-2 месяца для уверенной работы с
+Reagent/re-frame.
+
+*Продуктивная работа*: 3-6 месяцев для комфортного написания production
+кода.
+
+*Основная сложность* не в синтаксисе (его очень мало), а в том, что
+нужно "разучиться" думать императивно и объектно-ориентированно. Как
+говорят: "You must unlearn what you have learned about imperative and
+object-oriented paradigms".
+
+Большинство проблем новичков связаны не с функциональным подходом, а с
+незнанием =clojure.core= API и платформенных особенностей (JVM для
+Clojure, JS для ClojureScript).
+
+*** Какие IDE/редакторы поддерживают ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: какие-ideредакторы-поддерживают-clojurescript
+:END:
+*VSCode + Calva* (рекомендуется для начинающих) - Бесплатно - Встроенный
+REPL - Paredit из коробки - Отличная документация
+
+*IntelliJ IDEA + Cursive* - Мощный рефакторинг - Отличная навигация по
+коду - Платная лицензия ($199/год для коммерческого использования)
+
+*Emacs + CIDER* - Максимальная гибкость - Steep learning curve - Для
+фанатов Emacs
+
+*Vim + Conjure/Fireplace* - Для тех, кто не мыслит жизни без Vim
+
+Все редакторы поддерживают: - REPL интеграцию - Structural editing
+(paredit/parinfer) - Code completion - Inline evaluation
+
+*** Как дебажить ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: как-дебажить-clojurescript
+:END:
+*Browser DevTools*
+
+#+begin_src clojure
+(js/console.log "debug:" value)
+(js/console.table data)
+#+end_src
+
+*REPL debugging* Самый мощный способ - оценивать выражения прямо в REPL:
+
+#+begin_src clojure
+(def state (atom {:users []}))
+@state  ; посмотреть текущее состояние
+(swap! state assoc :debug true)  ; изменить на лету
+#+end_src
+
+*tap>* Современный способ дебага:
+
+#+begin_src clojure
+(tap> {:event :user-clicked :data user})
+; Данные попадают в tap-системы (Portal, Reveal)
+#+end_src
+
+*re-frame-10x* (для re-frame приложений) - Time-travel debugging -
+Просмотр всех events/effects - Diff состояний
+
+*Source maps* Shadow-cljs автоматически генерирует source maps, поэтому
+в Chrome DevTools вы видите оригинальный CLJS код, а не скомпилированный
+JS.
+
+*** Можно ли использовать npm библиотеки?
+:PROPERTIES:
+:CUSTOM_ID: можно-ли-использовать-npm-библиотеки
+:END:
+Да, shadow-cljs имеет first-class поддержку npm:
+
+#+begin_src clojure
+;; package.json
+{
+  "dependencies": {
+    "react": "^18.0.0",
+    "lodash": "^4.17.21"
+  }
+}
+
+;; ClojureScript
+(ns app.core
+  (:require ["react" :as react]
+            ["lodash" :as _]))
+
+(react/createElement "div" nil "Hello")
+(_.debounce my-fn 300)
+#+end_src
+
+*Interop с React компонентами:*
+
+#+begin_src clojure
+(:require ["@mui/material" :refer [Button TextField]])
+
+(defn my-component []
+  [:> Button {:variant "contained"
+              :on-click #(js/alert "Clicked")}
+   "Click me"])
+#+end_src
+
+Работают все npm библиотеки без исключений. Для React-компонентов есть
+удобный синтаксис =[:> Component props]=.
+
+--------------
+
+** Производительность
+:PROPERTIES:
+:CUSTOM_ID: производительность
+:END:
+*** Persistent data structures медленные?
+:PROPERTIES:
+:CUSTOM_ID: persistent-data-structures-медленные
+:END:
+*Короткий ответ*: Нет, для большинства приложений они быстрее.
+
+*Технически*: - Persistent structures используют structural sharing -
+копируется только изменённая часть дерева (O(log32 N)) - Сравнение
+коллекций - O(1) благодаря hash и reference equality - Не нужно делать
+defensive копии как в JS (={...obj}=)
+
+*React/Reagent context*: - В React нужно =memo()=, =useMemo()=,
+=useCallback()= для оптимизации - В Reagent structural sharing +
+=identical?= проверка дают автоматическую оптимизацию без memo -
+shouldComponentUpdate бесплатно благодаря immutability
+
+*Benchmarks*: ClojureScript приложения часто быстрее чем аналоги на
+React, потому что React под капотом тоже использует virtual DOM diffing,
+но без гарантий immutability приходится проверять всё дерево.
+
+Если нужна максимальная производительность, есть transients для batch
+mutations: =O(1)= как у мутабельных структур, но с гарантиями
+immutability после завершения.
+
+*** Какой bundle size у ClojureScript приложений?
+:PROPERTIES:
+:CUSTOM_ID: какой-bundle-size-у-clojurescript-приложений
+:END:
+*Реальные цифры:*
+
+Hello World с Reagent: ~250-300 KB (gzip) - React: ~40 KB -
+ClojureScript runtime: ~80 KB - Reagent: ~20 KB - Google Closure
+runtime: ~100 KB
+
+Среднее production приложение: 500 KB - 1 MB (gzip)
+
+*Важно понимать:* - Первоначальный bundle больше чем у Vue/React, но
+рост замедляется благодаря отсутствию дублирования кода - Google Closure
+Compiler удаляет мёртвый код агрессивнее чем Webpack/Rollup - Code
+splitting работает из коробки - Для landing pages не лучший выбор, для
+продуктивных SPA приложений - разница между 500 KB и 1 MB не критична
+
+*Оптимизации:*
+
+#+begin_src clojure
+;; shadow-cljs.edn
+:compiler-options {:infer-externs :auto}  ; автоматический advanced compilation
+:module-hash-names true  ; для кеширования
+#+end_src
+
+*** Hot reload работает нормально?
+:PROPERTIES:
+:CUSTOM_ID: hot-reload-работает-нормально
+:END:
+*Да, и это одна из killer features ClojureScript.*
+
+Shadow-cljs поддерживает hot reload без потери state:
+
+#+begin_src clojure
+(defonce state (atom {:count 0}))  ; defonce сохраняет state при reload
+
+(defn component []
+  [:div @state])  ; изменения компонента применяются мгновенно
+#+end_src
+
+*Почему это работает лучше чем в React:* - Функции без побочных эффектов
+можно перезагружать безопасно - State в atoms/re-frame живёт независимо
+от компонентов - Нет lifecycle hooks, которые нужно пересоздавать
+
+*Fast Refresh в React vs CLJS:* - React Fast Refresh требует специальных
+правил (hooks должны быть в правильном порядке, etc) - CLJS hot reload
+просто работает для любых функций
+
+Время от сохранения файла до обновления в браузере: обычно < 1 секунды.
+
+*** Startup time какой?
+:PROPERTIES:
+:CUSTOM_ID: startup-time-какой
+:END:
+*Development:* - Первая компиляция (cold start): 10-30 секунд в
+зависимости от размера проекта - Incremental компиляция: 0.5-2 секунды -
+REPL startup: 5-10 секунд
+
+*Production build:* - Small app: 30-60 секунд - Large app: 2-5 минут -
+Google Closure advanced compilation медленная, но результат того стоит
+
+*Runtime (в браузере):* - Инициализация CLJS runtime: минимальная,
+незаметная - Первый рендер: сравнимо с React
+
+*Сравнение с TypeScript/Vite:* - Development: CLJS медленнее на первом
+запуске, но incremental compile сравним - Production: CLJS медленнее
+(из-за Closure Compiler), но bundle меньше и оптимизированнее
+
+Для больших команд обычно используют CI для production builds, dev
+builds достаточно быстрые.
+
+--------------
+
+** Экосистема и библиотеки
+:PROPERTIES:
+:CUSTOM_ID: экосистема-и-библиотеки
+:END:
+*** Есть ли поддержка SSR/SEO?
+:PROPERTIES:
+:CUSTOM_ID: есть-ли-поддержка-ssrseo
+:END:
+*Да, но это не основной use case.*
+
+*Для SEO есть несколько подходов:*
+
+1. *Pre-rendering* (рекомендуется)
+   - Используйте prerender.io или headless Chrome для генерации статики
+   - Подходит для большинства случаев
+2. *Server-Side Rendering*
+   - Библиотеки: reagent-server (experimental)
+   - Node.js: можно рендерить CLJS на Node через shadow-cljs
+   - JVM: можно использовать Clojure на бэкенде для server-side
+     rendering
+3. *Static Site Generation*
+   - Для блогов/документации: Cryogen (Clojure SSG)
+
+*Реальность:* Большинство CLJS приложений - это productivity apps (admin
+панели, dashboards, internal tools), где SEO не критично. Для marketing
+сайтов обычно используют отдельный стек (Next.js, Astro).
+
+Если SEO критично для всего приложения - возможно, CLJS не лучший выбор.
+
+*** Есть ли аналог React Native для мобильных приложений?
+:PROPERTIES:
+:CUSTOM_ID: есть-ли-аналог-react-native-для-мобильных-приложений
+:END:
+*Да, несколько вариантов:*
+
+*1. React Native + ClojureScript* - re-natal (устаревший) - shadow-cljs
++ metro bundler (современный подход) - Работают все React Native
+библиотеки
+
+*2. Flutter + ClojureDart* - ClojureDart компилируется в Dart -
+Экспериментальный, но перспективный
+
+*3. Native (experimental)* - Clojure на Android через JVM - Не
+рекомендуется для production
+
+*Реальность:* Большинство компаний, использующих CLJS для web,
+используют React Native + JS/TS для mobile, либо отдельные native
+приложения. Экосистема mobile CLJS существует, но значительно меньше чем
+web.
+
+Если мобильные приложения - ваш основной фокус, лучше использовать React
+Native с TypeScript.
+
+*** Как тестировать ClojureScript код?
+:PROPERTIES:
+:CUSTOM_ID: как-тестировать-clojurescript-код
+:END:
+*Unit тесты:*
+
+#+begin_src clojure
+(ns app.core-test
+  (:require [cljs.test :refer [deftest is testing]]))
+
+(deftest addition-test
+  (is (= 4 (+ 2 2))))
+#+end_src
+
+*Запуск:*
+
+#+begin_src sh
+npx shadow-cljs compile test
+# или с watch
+npx shadow-cljs watch test
+#+end_src
+
+*Популярные библиотеки:* - =cljs.test= - встроенная -
+=clojure.test.check= - property-based testing - =day8/re-frame-test= -
+для re-frame приложений
+
+*E2E тесты:* - Cypress работает как с обычным SPA - Playwright тоже
+работает
+
+*REPL-based testing:* Многие разработчики тестируют функции прямо в
+REPL:
+
+#+begin_src clojure
+(defn process-data [data]
+  (tap> {:input data})  ; debug
+  (->> data
+       (filter valid?)
+       (map transform)))
+
+;; В REPL:
+(process-data test-data)  ; сразу видим результат
+#+end_src
+
+*** Какие компании используют ClojureScript в production?
+:PROPERTIES:
+:CUSTOM_ID: какие-компании-используют-clojurescript-в-production
+:END:
+*Крупные компании:* - *Nubank* - бразильский финтех (700+ Clojure
+разработчиков) - *Apple* - внутренние инструменты - *Cisco* - некоторые
+продукты - *Walmart* - внутренние системы
+
+*Известные продукты:* - *Roam Research* - note-taking (полностью на
+CLJS) - *Precursor* - collaborative prototyping - *Zimpler* - платёжная
+система (все user-facing приложения) - *AnyChart* - JavaScript charting
+library (документация на CLJS)
+
+*Тип компаний:* - Финтех и банки: 22% рынка Clojure вакансий -
+Healthcare и retail - растущие сегменты - Стартапы до 100 человек -
+sweet spot
+
+*State of Clojure 2024:* - 73% респондентов используют Clojure на
+работе - Основное применение: web development, enterprise apps,
+commercial services
+
+Полный список: https://clojure.org/community/companies
+
+*** Большое ли комьюнити?
+:PROPERTIES:
+:CUSTOM_ID: большое-ли-комьюнити
+:END:
+*Размер комьюнити:* Меньше чем React/Vue, но активное и helpful.
+
+*State of Clojure 2024 статистика:* - ~2500 респондентов опроса (для
+сравнения: State of JS ~40000) - 93% используют Babashka (scripting
+runtime) - 73% используют Clojure на работе
+
+*Активность:* - Clojurians Slack: ~15000 участников, очень активный -
+ClojureVerse форум: регулярные обсуждения - /r/Clojure: ~40000
+подписчиков - GitHub: 18000+ stars у Clojure, 3000+ у ClojureScript
+
+*Качество vs количество:* Комьюнити небольшое, но: - Очень helpful -
+новички получают ответы быстро - Высокое качество обсуждений - Много
+senior разработчиков - Меньше noise и драмы чем в React/JS комьюнити
+
+*Русскоязычное комьюнити:* - Clojurians Slack #ru-clojure канал -
+Небольшое, но существует - Большинство ресурсов на английском
+
+--------------
+
+** Рынок и карьера
+:PROPERTIES:
+:CUSTOM_ID: рынок-и-карьера
+:END:
+*** Какие зарплаты у ClojureScript разработчиков?
+:PROPERTIES:
+:CUSTOM_ID: какие-зарплаты-у-clojurescript-разработчиков
+:END:
+*США (2024-2025):* - *Средняя*: $129,000 - $156,000 / год -
+*Junior/Mid*: $96,000 - $127,000 - *Senior*: $150,000 - $189,000 - *Top
+earners*: $200,000 - $264,000
+
+*Конкретные примеры:* - Apple: $143,100 - $264,200 для Clojure
+Programmers - Double the Donation: $140,000 - $180,000 для
+Clojure/ClojureScript
+
+*Стартапы (Wellfound 2025):* - Средняя: $156,000 / год
+
+*Европа:* - UK: £64,000 - £100,000 для Senior - EU: €55,000 - €65,000
+(удалёнка)
+
+*СНГ рынок:* - Очень мало вакансий специально по Clojure/ClojureScript -
+Украина: ~9 вакансий на LinkedIn - Россия: практически нет публичных
+вакансий на международных платформах - Большинство компаний в СНГ
+используют стандартный JS/TS стек
+
+*Общий тренд:* Зарплаты выше средних для backend/frontend разработчиков,
+потому что: 1. Меньше специалистов на рынке 2. Компании используют
+Clojure осознанно, обычно это зрелые команды 3. Clojure разработчики
+часто fullstack
+
+*** Легко ли найти работу на ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: легко-ли-найти-работу-на-clojurescript
+:END:
+*Реальность:*
+
+*Количество вакансий:* - Значительно меньше чем React/Vue/TypeScript -
+Clojure jobs: ~200-300 активных вакансий глобально
+(clojurejobboard.com) - Для сравнения: React jobs - десятки тысяч
+
+*Где искать:* - https://clojurejobboard.com - основной агрегатор -
+https://functional.works-hub.com/clojure-jobs - Clojurians Slack
+​#remote-jobs, #jobs - Twitter/X #clojure hashtag
+
+*География:* - США/Канада: основной рынок - Европа (UK, Германия,
+Нидерланды): есть вакансии - Remote: много возможностей - СНГ:
+практически нет
+
+*Типы компаний:* - Финтех (22% рынка) - Стартапы до 100 человек -
+Enterprise (100-1000 сотрудников - растёт)
+
+*Стратегия:*
+
+1. *Если вы уже работаете:* попробуйте внедрить Clojure в текущей
+   компании для бэкенда/tooling
+2. *Remote*: большинство Clojure вакансий - remote-friendly
+3. *Fullstack*: знание JVM + CLJS расширяет возможности
+4. *Комбо*: React/TypeScript + Clojure backend - наиболее реалистичная
+   стратегия
+
+*Честно:* Если ваша цель - максимум вакансий и легкость
+трудоустройства - учите TypeScript + React. Если интересно работать с
+интересными технологиями в зрелых командах и готовы к меньшему выбору
+вакансий - Clojure отличный выбор.
+
+*** Clojure/ClojureScript умрёт как язык?
+:PROPERTIES:
+:CUSTOM_ID: clojureclojurescript-умрёт-как-язык
+:END:
+*Короткий ответ: Нет.*
+
+*Факты:* - Clojure был релизнут в 2007 году (18 лет) - ClojureScript -
+2011 год (14 лет) - Clojure 1.12.0 вышел в сентябре 2024 (активная
+разработка) - 58% респондентов State of Clojure 2024 уже используют
+новейшую версию
+
+*Стабильность:* - Backwards compatibility - приоритет - Код 10-летней
+давности работает без изменений - Нет breaking changes каждый год как в
+JS экосистеме
+
+*Корпоративная поддержка:* - Nubank (700+ разработчиков) - не умрёт
+завтра - Cognitect (создатели Clojure) - продолжают развитие - Datomic,
+Babashka - активные проекты экосистемы
+
+*Adoption:* - Не растёт взрывными темпами как JS frameworks - Стабильная
+ниша: fintech, enterprise, data engineering - Рост в больших компаниях
+(100-1000 сотрудников)
+
+*Риски:* - Меньше новых разработчиков чем в JS/TS - Если ключевые люди
+уйдут - возможно замедление развития - JVM dependency (но это и
+преимущество)
+
+*Реальность:* Clojure - это не модный фреймворк, который умрёт через 5
+лет. Это mature технология с stable core и долгосрочной перспективой.
+Если вы учите CLJS сейчас, он будет актуален минимум ещё 10+ лет.
+
+Сравните с JS: сколько фреймворков умерло за 10 лет? Angular.js,
+Backbone, Ember (почти), сейчас под вопросом даже React. Clojure -
+стабильность.
+
+--------------
+
+** Команда и разработка
+:PROPERTIES:
+:CUSTOM_ID: команда-и-разработка
+:END:
+*** Сложно ли нанять Clojure разработчиков?
+:PROPERTIES:
+:CUSTOM_ID: сложно-ли-нанять-clojure-разработчиков
+:END:
+*Да, сложнее чем React/Vue разработчиков.*
+
+*Почему сложно:* - Меньше специалистов на рынке - Большинство уже
+трудоустроены (73% используют на работе) - Конкуренция за Clojure
+разработчиков высокая - В СНГ практически нет рынка
+
+*Стратегии:*
+
+1. *Train, don't hire*
+   - Нанимайте strong разработчиков и обучайте Clojure
+   - Nubank так сделали (700 разработчиков)
+   - Timeline: 3-6 месяцев до продуктивности
+2. *Remote-first*
+   - Большинство Clojure вакансий - remote
+   - Расширяет географию поиска
+3. *Community engagement*
+   - Активность в Clojurians Slack
+   - Спонсирование конференций (Clojure/conj)
+   - Open source проекты
+4. *Strong компенсация*
+   - Зарплаты выше среднего
+   - Интересные технические задачи
+
+*Альтернативный подход:* Не переводите всё на Clojure. Используйте его
+для: - Backend API (где можно нанять JVM разработчиков и обучить
+Clojure) - Internal tools - Data processing
+
+Frontend оставьте на React/Vue/TS (больше кандидатов).
+
+*** Сколько времени занимает онбординг разработчика?
+:PROPERTIES:
+:CUSTOM_ID: сколько-времени-занимает-онбординг-разработчика
+:END:
+*Зависит от бэкграунда:*
+
+*JavaScript/TypeScript разработчик без FP опыта:* - Чтение кода: 2-3
+недели - Простые задачи: 1-2 месяца - Полная продуктивность: 4-6 месяцев
+
+*Java/Backend разработчик:* - Clojure (backend) осваивают быстрее: 1-3
+месяца - ClojureScript: +2 месяца (нужно понять React/frontend)
+
+*Функциональный бэкграунд (Haskell, Scala, F#):* - Syntax: 1-2 недели -
+Продуктивность: 1-2 месяца
+
+*Что помогает онбордингу:*
+
+1. *Парное программирование*
+   - Код ревью с объяснениями
+   - Mob programming сессии
+2. *Структура кодбейзы*
+   - Чёткие naming conventions
+   - Документированные архитектурные решения
+3. *REPL-driven development*
+   - Быстрая обратная связь
+   - Экспериментирование без последствий
+4. *Ресурсы:*
+   - "Clojure for the Brave and True" (книга)
+   - ClojureScript Quick Start
+   - Компания внутренние гайды
+
+*State of Clojure 2024:* Большинство разработчиков пришли из Java,
+JavaScript, Python - все успешно освоили язык.
+
+*** Можно ли использовать ClojureScript в команде из одного человека?
+:PROPERTIES:
+:CUSTOM_ID: можно-ли-использовать-clojurescript-в-команде-из-одного-человека
+:END:
+*Да, и это даже лучше чем в большой команде.*
+
+*Почему solo dev выигрывает:*
+
+1. *Нет онбординга*
+   - Не нужно обучать команду
+   - Пишете как удобно вам
+2. *Fullstack из коробки*
+   - Один язык для frontend/backend
+   - Shared code (.cljc)
+   - Меньше context switching
+3. *Долгосрочная стабильность*
+   - Код не устаревает как JS frameworks
+   - Меньше рефакторингов из-за breaking changes
+4. *Производительность*
+   - REPL-driven development быстрее
+   - Меньше boilerplate
+   - Меньше времени на настройку tooling
+
+*Когда не стоит:* - Планируете быстро масштабировать команду - Нужно
+продать продукт (а не technology) - Критично время до маркета (time to
+market)
+
+*Реальные кейсы:* Многие solo developers используют Clojure/CLJS для: -
+SaaS продуктов - Internal tools - Data analysis tools - MVPs
+
+*Recommendation:* Если вы solo и не планируете быстро расти - CLJS
+отличный выбор. Если нужна команда через полгода - возможно, React/TS
+безопаснее.
+
+--------------
+
+** Интероп и миграция
+:PROPERTIES:
+:CUSTOM_ID: интероп-и-миграция
+:END:
+*** Можно ли использовать любую React библиотеку в ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: можно-ли-использовать-любую-react-библиотеку-в-clojurescript
+:END:
+*Да, любую.*
+
+*Синтаксис:*
+
+#+begin_src clojure
+;; npm install @mui/material
+(:require ["@mui/material" :refer [Button TextField Dialog]])
+
+(defn my-form []
+  [:div
+   [:> TextField {:label "Name"
+                  :value @name
+                  :on-change #(reset! name (.. % -target -value))}]
+   [:> Button {:variant "contained"
+               :on-click handle-submit}
+    "Submit"]])
+#+end_src
+
+*=:>= - специальный синтаксис Reagent для React компонентов.*
+
+*Hooks (experimental):*
+
+#+begin_src clojure
+(:require ["react" :as react])
+
+(defn use-fetch [url]
+  (let [[data set-data] (react/useState nil)]
+    (react/useEffect
+      (fn []
+        (.then (js/fetch url)
+               #(.json %)
+               #(set-data %)))
+      #js [url])
+    data))
+#+end_src
+
+*TypeScript типы:* Теряются, нужно смотреть в документацию библиотеки.
+
+*Что работает:* - Material-UI, Ant Design, Chakra UI - React Spring,
+Framer Motion (анимации) - React Query, SWR (data fetching) - Recharts,
+Victory (графики) - React Router (хотя есть reitit-frontend)
+
+*Что может быть сложно:* - Библиотеки с complex TypeScript types -
+Генераторы кода (нужны workarounds) - Компоненты с императивным API (ref
+based)
+
+*** Можно ли использовать Vue компоненты в ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: можно-ли-использовать-vue-компоненты-в-clojurescript
+:END:
+*Технически возможно, но не рекомендуется.*
+
+ClojureScript обычно использует React (через Reagent), а не Vue.
+Интеграция Vue компонентов потребует: 1. Подключить Vue runtime 2.
+Создать мост между Vue и React/Reagent 3. Разбираться с двумя
+реактивными системами
+
+*Альтернативы:* 1. Используйте React версию компонента (большинство UI
+библиотек есть для обоих) 2. Перепишите компонент на Reagent (часто
+проще чем кажется) 3. Оставьте часть приложения на Vue, часть на CLJS
+(микрофронтенды)
+
+*Реальность:* Если вы хотите использовать Vue компоненты - возможно,
+стоит остаться на Vue вместо миграции на CLJS.
+
+*** Можно ли постепенно мигрировать проект на ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: можно-ли-постепенно-мигрировать-проект-на-clojurescript
+:END:
+*Да, несколько стратегий:*
+
+*1. Новые фичи на CLJS* - Существующий код остаётся на React/Vue - Новые
+компоненты пишете на Reagent - Общаются через props/events
+
+*2. По страницам* - Главная страница - React - Admin панель -
+ClojureScript - Общий state через localStorage или API
+
+*3. Backend первым* - Переписываете API на Clojure - Frontend остаётся
+React/Vue - Постепенно shared код переносите в .cljc
+
+*4. Micro-frontends* - Разные части приложения - разные технологии -
+Изоляция через iframe или Web Components
+
+*Реальность:* Большинство компаний НЕ мигрируют существующие проекты на
+CLJS. Вместо этого: - Новые проекты начинают на CLJS - Legacy остаётся
+на старом стеке - Или ре-write при мажорном редизайне
+
+*Если планируете миграцию:* - Начните с backend (Clojure легче продать
+чем ClojureScript) - Доказывайте ценность на production - Только потом
+переходите к frontend
+
+*** Нужно ли переписывать backend на Clojure если используете ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: нужно-ли-переписывать-backend-на-clojure-если-используете-clojurescript
+:END:
+*Нет, не обязательно.*
+
+*Варианты:*
+
+*1. CLJS frontend + Node.js/Python/Java backend* - Работает нормально -
+Теряете .cljc shared code - Дублируете validation/models
+
+*2. CLJS frontend + Clojure backend* - Идеальный вариант - Shared код
+(.cljc) - Одна команда, один язык
+
+*3. CLJS frontend + любой REST/GraphQL API* - Backend может быть на чём
+угодно - CLJS просто делает HTTP запросы
+
+*Когда имеет смысл Clojure backend:* - Пишете новый проект с нуля -
+Backend логика сложная (fintech, data processing) - Хотите fullstack
+команду
+
+*Когда НЕ имеет смысл:* - Backend работает отлично и менять незачем -
+Команда backend не хочет учить Clojure - Backend на другом языке и
+переписывать дорого
+
+*Преимущества CLJS даже без Clojure backend:* - Immutability -
+REPL-driven development - re-frame для state management - Structural
+sharing для performance
+
+Вы всё равно получаете большую часть выгоды от CLJS.
+
+--------------
+
+** Дополнительные вопросы
+:PROPERTIES:
+:CUSTOM_ID: дополнительные-вопросы
+:END:
+*** Зачем учить новый синтаксис если есть TypeScript?
+:PROPERTIES:
+:CUSTOM_ID: зачем-учить-новый-синтаксис-если-есть-typescript
+:END:
+*Философский ответ:* TypeScript решает проблемы JavaScript, добавляя
+типы. ClojureScript решает фундаментальные проблемы программирования:
+immutability, simplicity, data-oriented design.
+
+*Практический ответ:*
+
+*TypeScript даёт:* - Compile-time type safety - Better IDE
+autocomplete - Refactoring tools
+
+*ClojureScript даёт:* - Runtime type safety (spec/malli) - Immutability
+из коробки - REPL-driven development - Меньше кода (threading macros,
+destructuring) - Stable platform (код 10-летней давности работает) -
+Homoiconicity (код = данные, макросы)
+
+*Когда учить CLJS:* - Вам интересен функциональный подход - Вы устали от
+JavaScript fatigue - Вы хотите писать меньше кода - Вам важна
+долгосрочная стабильность
+
+*Когда оставаться на TypeScript:* - Вам нужна работа (больше вакансий) -
+Команда не готова к новому языку - Проект требует максимального быстрого
+старта
+
+*Реальность:* Можно знать оба. TypeScript для работы, CLJS для души и
+side projects. Концепции из CLJS сделают вас лучшим TypeScript
+разработчиком.
+
+*** Работает ли WebAssembly с ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: работает-ли-webassembly-с-clojurescript
+:END:
+*Да, но это не основной use case.*
+
+*Варианты:*
+
+*1. Вызов WASM из CLJS*
+
+#+begin_src clojure
+(defn use-wasm []
+  (-> (js/WebAssembly.instantiate module)
+      (.then (fn [instance]
+               (let [exports (.-exports instance)]
+                 (.add exports 1 2))))))
+#+end_src
+
+*2. Компиляция Clojure в WASM* - Экспериментальные проекты есть - Не
+production-ready
+
+*3. ClojureDart → Flutter (компилируется в native через Dart)*
+
+*Когда нужно:* - Performance-critical вычисления (криптография, image
+processing) - Интеграция с Rust/C++ библиотеками
+
+*Реальность:* Большинство CLJS приложений не нуждаются в WASM. Если вам
+критична производительность: 1. Используйте transducers 2. Оптимизируйте
+алгоритмы 3. Вынесите тяжёлые вычисления на backend 4. Web Workers для
+параллельности
+
+WASM используйте только если действительно нужна near-native performance
+в браузере.
+
+*** Есть ли CI/CD примеры для ClojureScript?
+:PROPERTIES:
+:CUSTOM_ID: есть-ли-cicd-примеры-для-clojurescript
+:END:
+*Да, shadow-cljs легко интегрируется.*
+
+*GitHub Actions:*
+
+#+begin_src yaml
+name: Build
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+      - uses: actions/setup-node@v2
+      - run: npm install
+      - run: npx shadow-cljs release app
+      - run: npx shadow-cljs compile test
+#+end_src
+
+*GitLab CI:*
+
+#+begin_src yaml
+build:
+  image: clojure:openjdk-17
+  script:
+    - npm install
+    - npx shadow-cljs release app
+  artifacts:
+    paths:
+      - public/js/
+#+end_src
+
+*Docker:*
+
+#+begin_src dockerfile
+FROM clojure:openjdk-17
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm install
+COPY . .
+RUN npx shadow-cljs release app
+#+end_src
+
+*Что нужно:* - Java 11+ (для shadow-cljs) - Node.js (для npm
+dependencies) - ~5-10 минут для production build
+
+*Caching:*
+
+#+begin_src yaml
+- uses: actions/cache@v2
+  with:
+    path: |
+      ~/.m2
+      node_modules
+    key: ${{ runner.os }}-deps-${{ hashFiles('**/deps.edn', '**/package-lock.json') }}
+#+end_src
+
+Это ускоряет билды до 1-2 минут.
+
+*** Какие ресурсы для изучения ClojureScript лучшие?
+:PROPERTIES:
+:CUSTOM_ID: какие-ресурсы-для-изучения-clojurescript-лучшие
+:END:
+*Официальная документация:* - https://clojurescript.org - Quick Start,
+Guides - https://reagent-project.github.io - Reagent docs -
+https://day8.github.io/re-frame - re-frame docs
+
+*Книги:* - "Clojure for the Brave and True" (бесплатно онлайн) - для
+Clojure, но база та же - "Learn ClojureScript" - Andrew Meredith - "Web
+Development with Clojure" - Dmitri Sotnikov (включает CLJS)
+
+*Интерактивные курсы:* - https://www.learn-clojurescript.com - полный
+курс с примерами - 4clojure.com - упражнения (закрыт, но есть клоны) -
+Exercism.io Clojure track
+
+*Видео:* - Clojure/conj конференции (YouTube) - "ClojureScript Quick
+Start" - Lambda Island - Jacek Schae курсы (Learn re-frame, Learn
+Reagent)
+
+*Комьюнити:* - Clojurians Slack (ask здесь - получите ответ) -
+/r/Clojure - ClojureVerse форум
+
+*Практика:* - Advent of Code на ClojureScript - Переписать свой pet
+project - Контрибьютить в open source CLJS проекты
+
+*Roadmap:* 1. Базовый синтаксис (1-2 недели) 2. Reagent tutorial (1
+неделя) 3. Простое приложение (TODO app, calculator) 4. re-frame (2-3
+недели) 5. Fullstack app (этот workshop!)
+
+*Совет:* Не читайте всю теорию - сразу пишите код в REPL. ClojureScript
+лучше учить практикой.

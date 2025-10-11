@@ -1,0 +1,12 @@
+{:source-paths ["src"]
+
+ :dependencies [[reagent "1.1.0" :exclusions [cljsjs/react cljsjs/react-dom]]]
+
+ :builds {:app {:target :browser
+                :output-dir "public/js"
+                :asset-path "js"
+                :modules {:main {:entries [app.core]}}
+                :devtools {:before-load app.core/stop
+                           :after-load app.core/start
+                           :http-root "public"
+                           :http-port 3000}}}}

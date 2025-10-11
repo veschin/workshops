@@ -1,16 +1,3 @@
-.DS_Store
-.idea
-*.log
-tmp/
-
-repos
-tasks
-server/.cpcache
-server/.lsp
-server/.nrepl-port
-server/target
-server/resources/sites
-
 # Node.js
 node_modules/
 npm-debug.log*
@@ -84,5 +71,4 @@ tramp
 .shadow-cljs/classpath
 .shadow-cljs/manifest
 
-**/public/js*
-**.lsp
+*/js/cljs-runtime/*
