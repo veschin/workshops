@@ -26,7 +26,7 @@
 (defn api-handler [request]
   (let [user-id (get-in request [:params :user-id])
         post-id (get-in request [:params :post-id])
-        post-author-id 2] ; Mock post author
+        post-author-id 2] ; Mock post author ID - в реальном приложении из базы данных
     (handle-edit-post user-id post-id post-author-id)))
 
 ;; Example usage
