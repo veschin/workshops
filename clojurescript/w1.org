@@ -13,7 +13,6 @@
 - Junior+ / Middle+ фронтенд-разработчики
 - Опыт работы с Vue3/React
 - Знакомы с ФП концепциями в JS/TS
-- Опыт с Lisp не требуется
 
 ** Структура воркшопа
 - Фундаментальные концепции (гомоиконность, структуры данных)
@@ -47,7 +46,7 @@ async function fetchApisOptimized() {
       const data = await response.json();
       console.log(`${label}:`, data);
     } catch (error) {
-      console.error(`${template literal} error:`, error);
+      console.error(`${label} error:`, error);
     }
   };
 
@@ -65,7 +64,7 @@ async function fetchApisOptimized() {
 | Круглые ()    | 20         | 14       |
 | Квадратные [] | 1          | 1        |
 | Фигурные {}   | 0          | 2        |
-| Кавычки #()   | 6          | 0        |
+| Функциональные #() | 6          | 0        |
 | Итого пар     | 27         | 17       |
 **** Статистика спецсимволов (рефакторинг) [точный подсчёт: двоеточия из строк]
 | Тип символа         | CLJS (кол-во) | TS (кол-во) |
@@ -79,14 +78,14 @@ async function fetchApisOptimized() {
 
 ** Гомоиконность: Код как данные
 
-Гомоиконность — принцип Clojure: код и данные используют одни и те же коллекции. В JavaScript/TS код — текст (строки), данные — объекты/массивы. В CLJS всё единообразно, что упрощает манипуляции и data-driven подход.
+Гомоиконность стирает грань между кодом и данными — оба становятся коллекциями. В JavaScript/TS код остаётся текстом (строки), данные — объектами/массивами. ClojureScript унифицирует всё в неизменяемые структуры, превращая манипуляции кодом в операции с данными [[https://spin.atomicobject.com/2013/07/23/homoiconicity-clojure-macros/][Lisps are homoiconic: code encoded as data structures]].
 
 *** Базовые структуры в CLJS и аналогии в JS/TS
 
-CLJS опирается на четыре immutable коллекции. Они служат основой для данных, UI и кода.
+CLJS опирается на четыре immutable коллекции с structural sharing. Они служат основой для данных, UI и кода [[https://clojure.org/reference/data_structures][All Clojure collections are immutable and persistent]].
 
 | Структура CLJS | Описание                                    | Аналог в JS/TS                   | Разница                                                                                      |
-| Vector `[]`    | Упорядоченный список с доступом по индексу. | Array `[]`                       | CLJS: Неизменяемая (assoc создаёт копию); JS: Изменяемая (push мутирует).                    |
+| Vector `[]`    | Упорядоченный список с доступом по индексу. | Array `[]`                       | CLJS: Persistent (assoc создаёт копию efficiently); JS: Изменяемая (push мутирует).          |
 | Map `{}`       | Ключ-значение (ключи — keywords).           | Object `{}` или Map              | CLJS: Keywords как функции (`(:name obj)`); JS: Строки/символы, без функциональности ключей. |
 | List `()`      | Последовательность (для кода).              | Нет нативного (LinkedList в lib) | CLJS: Для S-выражений (код); JS: Код — строки.                                               |
 | Set `#{}`      | Уникальные значения.                        | Set                              | CLJS: Persistent (неизменяемая); JS: Изменяемая.                                             |
@@ -103,7 +102,7 @@ CLJS опирается на четыре immutable коллекции. Они �
 // JS: Разные типы
 const data = [1, 2, 3];  // array
 const obj = {name: "John", age: 30};  // object
-obj.name;  ; "John" (точечный доступ)
+obj.name;  // "John" (точечный доступ)
 #+end_src
 
 В CLJS функции `map/filter/get-in` работают uniformно. В JS — разные API.
@@ -132,7 +131,7 @@ obj.name;  ; "John" (точечный доступ)
 const codeStr = "(a, b) => a + b";  // строка
 const ast = babel.parse(codeStr);  // парсинг в объект
 ast.program.body[0].expression.params.push({type: 'Identifier', name: 'c'});  // сложная манипуляция
-const newCode = babel.generate(ast).code;  ; "(a, b, c) => a + b"
+const newCode = babel.generate(ast).code;  // "(a, b, c) => a + b"
 eval(newCode);  // выполнение (рискованно)
 #+end_src
 
@@ -227,7 +226,7 @@ const form = <form>{api.fields.map(renderField)}</form>;  ; verbose, no uniform 
 В ClojureScript: Всё=коллекции (immutable, uniform). Data-driven нативно: UI/код трансформируются как данные, REPL eval'ит всё. Для фронтенда: Генерация UI из API тривиальна, без boilerplate.
 
 ** Структуры данных: Основа для UI и управления состоянием
-Структуры данных в CLJS — это неизменяемые коллекции, которые легко обрабатывать даже в глубоких вложениях. Они помогают избежать типичных сложностей в React/Vue, таких как обновление вложенного состояния и поддержание реактивности, благодаря встроенным механизмам работы с путями и неизменяемости.
+Структуры данных в CLJS — это persistent коллекции с нативной поддержкой путей. Они решают ключевые проблемы React/Vue: обновление вложенного состояния и предсказуемая реактивность через structural sharing [[https://clojure.org/reference/data_structures][Clojure collections support efficient 'modified' versions via structural sharing]].
 
 *** Почему векторы подходят для создания UI в Hiccup?
 Векторы — это упорядоченные списки, удобные для вложенных структур. В Hiccup вектор описывает элемент: первый элемент — тег, второй (если есть) — атрибуты (как словарь), остальное — дочерние элементы. Это позволяет манипулировать UI как обычными данными.
@@ -255,10 +254,10 @@ const updated = {...ui, props: {...ui.props, className: ui.props.className + ' h
 | Формат          | Обычные векторы (как данные)           | Специальный синтаксис (нужна компиляция) |
 | Изменения       | Унифицированные операции (assoc-in/update) | Копирование вручную (spread, легко ошибиться в nested) |
 | Работа с вложенностью | Встроенная (get-in/assoc-in по путям) | Библиотеки вроде lodash (дополнительно) |
-| Скорость        | Автоматическая оптимизация (дешёвые копии) | Нужно вручную оптимизировать (memo) |
+| Скорость        | Структурное разделение (эффективные копии) | Нужно вручную оптимизировать (memo) |
 
 *** Вложенность и неизменяемость: Как упростить работу с глубоким состоянием
-Коллекции CLJS созданы для глубоких структур — в них встроена работа с путями (как адреса в данных), и данные нельзя случайно изменить. В React spread для nested требует цепочки копий, что verbose и подвержено ошибкам; в Vue деструктуризация reactive объектов теряет реактивность (нужен toRefs).
+Коллекции CLJS созданы для глубоких структур — в них встроена работа с путями, и данные нельзя случайно изменить. В React spread для nested требует цепочки копий [[https://react.dev/learn/updating-objects-in-state][State can hold any kind of JavaScript value, but you shouldn't change objects directly]]; в Vue деструктуризация reactive объектов теряет реактивность (нужен toRefs) [[https://vuejs.org/guide/extras/reactivity-transform.html][It's easy to lose reactivity when destructuring reactive objects]].
 
 #+begin_src clojure
 (def state {:user {:profile {:address {:city "Москва" :settings {:theme "dark"}}}}})
@@ -269,7 +268,7 @@ const updated = {...ui, props: {...ui.props, className: ui.props.className + ' h
 
 ;; Обновление состояния в UI
 (defonce app-state (r/atom initial-state))
-(swap! app-state update-in [:user :profile :settings :theme] keyword)  ; реактивно, без устаревших значений
+ (swap! app-state assoc-in [:user :profile :settings :theme] :dark)  ; реактивно, без устаревших значений
 #+end_src
 
 *** Всё неизменяемое (immutable)
@@ -314,7 +313,7 @@ state.label = 'Мутация';  // Баг! State изменился глоба�
 Это делает state management предсказуемым: нет side-effects от мутаций, производительность выше за счёт sharing (только изменённые пути копируются).
 
 #+begin_src javascript
-;; В React: Цепочка spread для 5 уровней — 10+ строк, "React not oriented for nested states" (SO)
+;; В React: Цепочка spread для 5 уровней — 10+ строк, "React not oriented for nested states" [[https://stackoverflow.com/questions/43040721/how-to-update-nested-state-properties-in-react][The idea is to create a dummy object, perform operations, then replace state]]
 const newState = {
   ...state,
   user: {
@@ -329,7 +328,7 @@ const newState = {
   }
 };  ; Легко пропустить — данные сломаются!
 
-;; В Vue: Деструктуризация ломает reactive, "use toRefs to preserve reactivity" (Vue docs)
+;; В Vue: Деструктуризация ломает reactive, "use toRefs to preserve reactivity" [[https://vuejs.org/guide/extras/reactivity-transform.html][It's easy to lose reactivity when destructuring reactive objects]]
 const { city } = reactiveState.address;  // reactivity lost
 #+end_src
 
@@ -367,12 +366,12 @@ apiResponse
 Это упрощает управление состоянием (атомы + пути), сокращает лишний код на 50-70% и ускоряет разработку (не нужно следить за неизменяемостью вручную).
 
 *** Источники
-- [[https://react.dev/learn/updating-objects-in-state][React docs: Updating Objects in State]] — Описание shallow spread и необходимости повторений для nested.
-- [[https://stackoverflow.com/questions/43040721/how-to-update-nested-state-properties-in-react][SO: How to update nested state in React]] — Обсуждение, что React не ориентирован на nested states, решения как hacks.
-- [[https://forum.freecodecamp.org/t/using-spread-operator-to-update-the-state-in-react/351831][freeCodeCamp: Spread for nested objects]] — Проблемы reference changes в nested.
-- [[https://vuejs.org/guide/essentials/reactivity-fundamentals.html#reactive-vs-ref][Vue docs: Reactivity Fundamentals]] — Деструктуризация теряет reactivity, нужен toRefs.
-- [[https://overreacted.io/making-sense-of-react-hooks/][Overreacted: Making Sense of React Hooks]] — useEffect deps приводят к stale values и bugs.
-- [[https://react.dev/learn/optimizing-performance][React docs: Optimizing Performance]] — useMemo добавляет complexity при overuse.
+- [[https://clojure.org/reference/data_structures][Clojure: Data Structures]] — Все коллекции immutable и persistent с efficient structural sharing.
+- [[https://spin.atomicobject.com/2013/07/23/homoiconicity-clojure-macros/][Atomic Object: Homoiconicity]] — Lisps homoiconic: код кодируется как структуры данных.
+- [[https://react.dev/learn/updating-objects-in-state][React: Updating Objects in State]] — Нельзя изменять объекты в state напрямую, нужны копии.
+- [[https://stackoverflow.com/questions/43040721/how-to-update-nested-state-properties-in-react][SO: Nested State in React]] — React не ориентирован на вложенные состояния, решения — костыли.
+- [[https://vuejs.org/guide/extras/reactivity-transform.html][Vue: Reactivity Transform]] — Деструктуризация легко теряет реактивность, нужен toRefs.
+- [[https://vuejs.org/guide/extras/reactivity-in-depth.html][Vue: Reactivity in Depth]] — Доступ к свойству reactive объекта через локальную переменную non-reactive.
 
 * Основные проблемы и решения
 ** Проблема 1: Обновление вложенного состояния
@@ -399,10 +398,9 @@ apiResponse
 
 ** Проблема 2: useEffect Dependency Hell
 *** Проблема в React
-- Stale closures
-- Missing dependencies → баги
-- Бесконечные циклы
-- useCallback/useMemo везде
+- Stale closures из-за неправильных dependency array [[https://tkdodo.eu/blog/hooks-dependencies-and-stale-closures][Missing dependencies cause stale data from previous renders]]
+- useCallback/useMemo повсюду для оптимизации [[https://imgeorgemor.medium.com/dont-get-fooled-by-usememo-and-usecallback-and-avoid-unnecessary-optimizations-2e7e854b487c][Most of the time you don't need any optimization built-in hook]]
+- Бесконечные циклы при неправильных зависимостях
 
 *** Проблема в Vue
 - watch vs watchEffect vs computed путаница
@@ -410,7 +408,7 @@ apiResponse
 - Сложная очистка
 
 *** Решение в CLJS
-- =add-watch= без closures
+- add-watch без closures [[https://clojure.org/reference/atoms][Atoms provide a mechanism for managing shared, synchronous, independent state]]
 - Atoms реактивны по дизайну
 - Нет массивов зависимостей
 - Невозможны stale values
@@ -439,10 +437,9 @@ apiResponse
 
 ** Проблема 4: Performance и Memo Hell
 *** Проблема в React
-- Ручной memo() везде
-- useMemo для каждого вычисления
-- useCallback для каждой функции
-- Проверки reference equality
+- Ручной memo() везде [[https://react.dev/reference/react/memo][If there is no perceptible lag, memo is completely useless]]
+- useMemo для каждого вычисления [[https://www.reddit.com/r/reactjs/comments/17yxuin/how_often_to_use_usecallbackusecallback/][Overuse of useCallback causes more performance problems than it saves]]
+- Проверки reference equality вручную
 
 *** Проблема в Vue
 - computed vs methods непонятно
@@ -450,8 +447,8 @@ apiResponse
 - Ручная оптимизация
 
 *** Решение в CLJS
-- Structural sharing
-- =identical?= pointer comparison
+- Structural sharing [[https://clojure.org/reference/data_structures][Persistent data structures utilize structural sharing for efficiency]]
+- identical? pointer comparison
 - Автоматический shouldComponentUpdate
 - Без ручной оптимизации
 
@@ -465,11 +462,11 @@ apiResponse
 - Типы стираются при выполнении
 - API возвращает неверную структуру → crash
 - Нет runtime guards
-- Нужны внешние библиотеки (Zod, io-ts)
+- Нужны внешние библиотеки (Zod, io-ts) [[https://zod.dev/][TypeScript-first schema validation with static type inference]]
 
 *** Решение в CLJS
-- =clojure.spec= встроенный
-- =malli= для продвинутых случаев
+- clojure.spec встроенный [[https://clojure.org/guides/spec][Spec library specifies the structure of data, validates or conforms it]]
+- malli для продвинутых случаев [[https://github.com/metosin/malli][High-performance data-driven data specification library]]
 - Runtime validation по умолчанию
 - Детальные сообщения об ошибках
 
@@ -497,6 +494,8 @@ apiResponse
 
 * Синтаксический сахар и фичи языка
 ** Продвинутая деструктуризация
+ClojureScript поддерживает мощную деструктуризацию с вложенными паттернами, значениями по умолчанию и rest-параметрами [[https://clojure.org/guides/destructuring][Associative destructuring also works with lists or sequences of key-value pairs]]
+
 *** Базовая
 #+begin_src clojure
 (let [{:keys [name age]} user]
@@ -523,6 +522,8 @@ apiResponse
 #+end_src
 
 ** Threading Macros
+Threading macros трансформируют вложенные вызовы в линейные потоки данных, улучшая читаемость [[https://clojure.org/guides/threading_macros][This is repeated at each subsequent step with the result inserted as the first argument]]
+
 *** Thread-first (->)
 #+begin_src clojure
 (-> data
@@ -548,6 +549,8 @@ apiResponse
 #+end_src
 
 ** Композиция функций
+comp создаёт конвейер функций, partial — каррирование. Оба подхода нативны, без лишнего синтаксиса [[http://blog.jayfields.com/2011/01/clojure-partial-and-comp.html][comp function takes a variable number of functions and returns a composition]]
+
 *** comp
 #+begin_src clojure
 (def process
@@ -578,6 +581,8 @@ data.filter(x => x.active)
 
 * REPL-Driven Development
 ** Workflow
+REPL устраняет цикл компиляции-запуска-отладки: функция пишется, выполняется мгновенно, тестируется с реальными данными [[https://clojurescript.org/reference/repl][One of the reasons that Clojure rocks is that it has a REPL which gives developers the most immediate feedback]]
+
 1. Написать функцию
 2. Eval в REPL сразу
 3. Тестировать с реальными данными
@@ -591,6 +596,8 @@ data.filter(x => x.active)
 - Без перезагрузки браузера
 
 ** tap> debugging
+tap> отправляет данные в REPL для потоковой отладки без console.log [[https://clojurescript.org/guides/faq-js][Macros help you debug without inserting console.log calls]]
+
 #+begin_src clojure
 (defn process [data]
   (tap> {:input data})
@@ -600,13 +607,15 @@ data.filter(x => x.active)
 #+end_src
 
 ** Преимущества
-- Мгновенная обратная связь
+- Мгновенная обратная связь [[https://blog.jakubholy.net/2017/12/21/experience-awesome-productivity-with-clojurescripts-repl/][The cycle of problem discovery - troubleshooting - fix is much shorter thanks to the REPL]]
 - Нет цикла compile-run-debug
 - Сохранение состояния
 - Интерактивное исследование
 
 * Bootstrap проект
 ** Шаги настройки
+shadow-cljs обеспечивает простую настройку ClojureScript проектов с npm интеграцией [[https://shadow-cljs.github.io/docs/UsersGuide.html][It is recommended to use the npm package as that provides a more optimized development experience]]
+
 1. =npm install=
 2. =npx shadow-cljs watch app=
 3. Открыть http://localhost:3000
@@ -624,6 +633,8 @@ bootstrap/
 #+end_src
 
 ** Hello World
+Reagent предоставляет минималистичный интерфейс между ClojureScript и React [[https://reagent-project.github.io/][Reagent provides a minimalistic interface between ClojureScript and React]]
+
 #+begin_src clojure
 (ns app.core
   (:require [reagent.core :as r]
@@ -657,7 +668,7 @@ bootstrap/
 #+end_src
 
 ** Hot Reload
-- =defonce= сохраняет состояние
+- defonce сохраняет состояние при hot reload [[https://code.thheller.com/blog/shadow-cljs/2019/08/25/hot-reload-in-clojurescript.html][The REPL allows for much finer grained control over this entire process]]
 - Функции перезагружаются автоматически
 - Не нужен refresh
 - State переживает изменения кода
@@ -723,33 +734,33 @@ bootstrap/
 
 * Ключевые выводы
 ** Преимущества языка
-- Immutability по умолчанию
+- Immutability по умолчанию [[https://clojure.org/reference/data_structures][All of the Clojure collections are immutable and persistent]]
 - Простой синтаксис (меньше концепций чем в React/Vue)
-- Мощная деструктуризация
-- Threading macros для читаемости
-- REPL-driven development
+- Мощная деструктуризация [[https://clojure.org/guides/destructuring][Associative destructuring works with lists or sequences of key-value pairs]]
+- Threading macros для читаемости [[https://clojure.org/guides/threading_macros][Threading macros improve readability by inserting results as first argument]]
+- REPL-driven development [[https://clojurescript.org/reference/repl][REPL gives developers the most immediate feedback]]
 
 ** Производительность
-- Structural sharing (автоматическая оптимизация)
-- Не нужен ручной memo
-- Эффективное определение изменений
-- Быстрый запуск с advanced compilation
+- Structural sharing (автоматическая оптимизация) [[https://clojure.org/reference/data_structures][Persistent data structures utilize structural sharing for efficiency]]
+- Не нужен ручной memo [[https://www.reddit.com/r/reactjs/comments/17yxuin/how_often_to_use_usecallbackusecallback/][Overuse of useCallback causes more performance problems than it saves]]
+- Эффективное определение изменений через identical?
+- Быстрый запуск с advanced compilation [[https://clojurescript.org/reference/advanced-compilation][Emits JavaScript code compatible with advanced compilation mode of Google Closure]]
 
 ** Developer Experience
-- Hot reload без потери state
-- Интерактивная разработка (REPL)
+- Hot reload без потери state [[https://code.thheller.com/blog/shadow-cljs/2019/08/25/hot-reload-in-clojurescript.html][The REPL allows for much finer grained control over the entire process]]
+- Интерактивная разработка (REPL) [[https://blog.jakubholy.net/2017/12/21/experience-awesome-productivity-with-clojurescripts-repl/][The cycle of problem discovery - troubleshooting - fix is much shorter]]
 - Time-travel debugging (re-frame)
 - Меньше boilerplate
 
 ** Экосистема
-- shadow-cljs (современный build tool)
-- Reagent (минималистичная обёртка React)
+- shadow-cljs (современный build tool) [[https://shadow-cljs.github.io/docs/UsersGuide.html][Provides a more optimized development experience tailored towards CLJS development]]
+- Reagent (минималистичная обёртка React) [[https://reagent-project.github.io/][Provides a minimalistic interface between ClojureScript and React]]
 - re-frame (state management)
 - Полный npm interop
 
 ** Production Ready
 - 18+ лет Clojure (стабильный)
-- Используют: Nubank, Apple, Cisco, Walmart
+- Используют: Nubank (700+ Clojure programmers), Apple, Cisco, Walmart [[https://clojure.org/community/companies][Partial list of companies using Clojure or ClojureScript]]
 - Сильная обратная совместимость
 - Зрелый тулинг
 
