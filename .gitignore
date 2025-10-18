@@ -86,3 +86,6 @@ tramp
 
 **/public/js*
 **.lsp
+**/cljs-runtime/
+**/public/cljs/
+**/public/problems/

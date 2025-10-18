@@ -1,4 +1,4 @@
-{:source-paths ["src/cljs"]
+ {:source-paths ["src" "../src"]
 
  :dependencies [[reagent "1.2.0"]]
 
@@ -11,44 +11,4 @@
    :devtools {:before-load examples.core/stop
               :after-load examples.core/start
               :http-root "public"
-              :http-port 3000}}
-
-  :problem-01 {:target :browser
-               :output-dir "public/cljs/01/js"
-               :asset-path "/cljs/01/js"
-               :modules {:main {:entries [examples.problem-01.core]}}}
-
-  :problem-02 {:target :browser
-               :output-dir "public/cljs/02/js"
-               :asset-path "/cljs/02/js"
-               :modules {:main {:entries [examples.problem-02.core]}}}
-
-  :problem-03 {:target :browser
-               :output-dir "public/cljs/03/js"
-               :asset-path "/cljs/03/js"
-               :modules {:main {:entries [examples.problem-03.core]}}}
-
-  :problem-04 {:target :browser
-               :output-dir "public/cljs/04/js"
-               :asset-path "/cljs/04/js"
-               :modules {:main {:entries [examples.problem-04.core]}}}
-
-  :problem-05 {:target :browser
-               :output-dir "public/cljs/05/js"
-               :asset-path "/cljs/05/js"
-               :modules {:main {:entries [examples.problem-05.core]}}}
-
-  :problem-06 {:target :browser
-               :output-dir "public/cljs/06/js"
-               :asset-path "/cljs/06/js"
-               :modules {:main {:entries [examples.problem-06.core]}}}
-
-  :problem-07 {:target :browser
-               :output-dir "public/cljs/07/js"
-               :asset-path "/cljs/07/js"
-               :modules {:main {:entries [examples.problem-07.core]}}}
-
-  :problem-08 {:target :browser
-               :output-dir "public/cljs/08/js"
-               :asset-path "/cljs/08/js"
-               :modules {:main {:entries [examples.problem-08.core]}}}}}
+              :http-port 3000}}}}

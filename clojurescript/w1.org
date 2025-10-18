@@ -1,29 +1,43 @@
-#+TITLE: Воркшоп 1: Введение в ClojureScript
-#+AUTHOR: ClojureScript Demo
-#+DATE: 2025
+#+TITLE: Введение в ClojureScript
+#+AUTHOR: veschin
 
 * Введение
-** Цели
-- Погрузить фронтенд-разработчиков в ClojureScript
-- Показать конкретные решения проблем React/Vue
-- Продемонстрировать преимущества CLJS на примерах
+** Цели воркшопа
+- Познакомить фронтенд-разработчиков с ClojureScript
+- Показать преимущества функционального подхода
 - Настроить рабочее окружение
 
 ** Целевая аудитория
 - Junior+ / Middle+ фронтенд-разработчики
 - Опыт работы с Vue3/React
-- Знакомы с ФП концепциями в JS/TS
+- Базовое знакомство с функциональным программированием
+
+** История создания ClojureScript
+ClojureScript был создан Ричем Хики в 2011 году как компиляция Clojure в JavaScript.
+Знаменитая фраза создателя объясняет мотивацию:
+#+begin_quote
+Clojure rocks, JavaScript reaches
+#+end_quote
+
+[[https://clojurescript.org/about][ClojureScript: About]].
+JavaScript доминировал в вебе, но страдал от проблем с инструментами, динамической типизацией и сложностью поддержки крупных приложений. ClojureScript предложил решение: мощный функциональный Lisp с возможностями продвинутой компиляции через Google Closure Compiler.
+
+** Позиционирование в экосистеме
+ClojureScript занимает уникальную нишу среди языков, компилируемых в JavaScript:
+- В отличие от TypeScript фокусируется на функциональной парадигме, а не на типах
+- В отличие от Elm предлагает более зрелую экосистему и промышленное применение
+- Сохраняет Lisp традиции homoiconicity и REPL-разработки
 
 ** Структура воркшопа
-- Фундаментальные концепции (гомоиконность, структуры данных)
-- Демонстрация проблем (React/Vue issues)
-- Решения на ClojureScript
+- REPL-Driven Development
+- Фундаментальные концепции
 - Синтаксический сахар
-- Настройка bootstrap проекта
-- Live coding примеры
-
+- Интероп с JavaScript
+- Сборщики проектов
 * Фундаментальные концепции
-*** Миф о скобках: Сравнение CLJS и TS
+** Миф о скобках: ClojureScript против TypeScript
+Сравним два подхода к решению одной задачи — параллельная загрузка API с логированием:
+
 #+begin_src clojure
 (defn fetch-apis []
   (-> (js/Promise.all [(let [log-json [url label]
@@ -31,22 +45,21 @@
                                  (.then #(.json %))
                                  (.then #(js/console.log (str label ":") %))
                                  (.catch #(js/console.error (str label " error:") %)))]
-                       (log-json "/api/users" "Users")
-                       (log-json "/api/posts" "Posts")
-                       (log-json "/api/comments" "Comments")))]
+                        (log-json "/api/users" "Users")
+                        (log-json "/api/posts" "Posts")
+                        (log-json "/api/comments" "Comments")))]
       (.catch #(js/console.error "Общая ошибка API:" %))))
 #+end_src
 
 #+begin_src typescript
-// Оптимизированный вариант (параллельный, с вынесенной функцией)
 async function fetchApisOptimized() {
   const logJson = async (url: string, label: string) => {
     try {
       const response = await fetch(url);
       const data = await response.json();
-      console.log(`${label}:`, data);
+      console.log(*${label}:*, data);
     } catch (error) {
-      console.error(`${label} error:`, error);
+      console.error(*${label} error:*, error);
     }
   };
 
@@ -56,491 +69,126 @@ async function fetchApisOptimized() {
     logJson('/api/comments', 'Comments')
   ]);
 }
-
 #+end_src
-**** Статистика скобок (рефакторинг) [версия с глобальным .catch в CLJS и оптимизацией TS]
-| Тип скобок    | CLJS (пар) | TS (пар) |
-|---------------|------------|----------|
-| Круглые ()    | 20         | 14       |
-| Квадратные [] | 1          | 1        |
-| Фигурные {}   | 0          | 2        |
-| Функциональные #() | 6          | 0        |
-| Итого пар     | 27         | 17       |
-**** Статистика спецсимволов (рефакторинг) [точный подсчёт: двоеточия из строк]
-| Тип символа         | CLJS (кол-во) | TS (кол-во) |
-|---------------------+---------------+-------------|
-| Запятые ,           |             0 |           5 |
-| Точки с запятой ;   |             0 |           0 |
-| Кавычки " двойные   |             8 |           0 |
-| Кавычки ' одинарные |             0 |          12 |
-| Бэктики `           |             0 |           2 |
-| Двоеточия :         |             0 |           6 |
 
-** Гомоиконность: Код как данные
+Количество синтаксических элементов:
+| Тип скобок    | ClojureScript | TypeScript |
+|---------------+---------------+------------|
+| Круглые ()    |            20 |         14 |
+| Квадратные [] |             1 |          1 |
+| Фигурные {}   |             0 |          2 |
+| Итого пар     |            21 |         17 |
 
-Гомоиконность стирает грань между кодом и данными — оба становятся коллекциями. В JavaScript/TS код остаётся текстом (строки), данные — объектами/массивами. ClojureScript унифицирует всё в неизменяемые структуры, превращая манипуляции кодом в операции с данными [[https://spin.atomicobject.com/2013/07/23/homoiconicity-clojure-macros/][Lisps are homoiconic: code encoded as data structures]].
+** Homoiconicity: Код как данные
+ClojureScript наследует из Lisp принцип homoiconicity — код имеет ту же структуру, что и данные. Это стирает границу между программированием и обработкой данных.
+*** Базовые структуры данных
+Четыре основные коллекции в ClojureScript:
 
-*** Базовые структуры в CLJS и аналогии в JS/TS
+| Структура   | Описание                      | Аналог в JavaScript      |
+|-------------+-------------------------------+--------------------------|
+| Vector *[]* | Упорядоченный список          | Array                    |
+| Map *{}*    | Ассоциативный массив          | Object или Map           |
+| List *()*   | Последовательность            | LinkedList (нет нативно) |
+| Set *#{}*   | Множество уникальных значений | Set                      |
 
-CLJS опирается на четыре immutable коллекции с structural sharing. Они служат основой для данных, UI и кода [[https://clojure.org/reference/data_structures][All Clojure collections are immutable and persistent]].
-
-| Структура CLJS | Описание                                    | Аналог в JS/TS                   | Разница                                                                                      |
-| Vector `[]`    | Упорядоченный список с доступом по индексу. | Array `[]`                       | CLJS: Persistent (assoc создаёт копию efficiently); JS: Изменяемая (push мутирует).          |
-| Map `{}`       | Ключ-значение (ключи — keywords).           | Object `{}` или Map              | CLJS: Keywords как функции (`(:name obj)`); JS: Строки/символы, без функциональности ключей. |
-| List `()`      | Последовательность (для кода).              | Нет нативного (LinkedList в lib) | CLJS: Для S-выражений (код); JS: Код — строки.                                               |
-| Set `#{}`      | Уникальные значения.                        | Set                              | CLJS: Persistent (неизменяемая); JS: Изменяемая.                                             |
-
-Пример данных:
 #+begin_src clojure
-;; CLJS: Коллекции
-(def data [1 2 3])  ; vector
+;; Коллекции в ClojureScript
+(def data [1 2 3])           ; vector
 (def obj {:name "John" :age 30})  ; map
-(:name obj)  ; => "John" (keyword как функция)
+(def items #{:a :b :c})      ; set
+
+;; Доступ к данным через keywords как функции
+(:name obj)  ; => "John"
 #+end_src
 
-#+begin_src javascript
-// JS: Разные типы
-const data = [1, 2, 3];  // array
-const obj = {name: "John", age: 30};  // object
-obj.name;  // "John" (точечный доступ)
-#+end_src
-
-В CLJS функции `map/filter/get-in` работают uniformно. В JS — разные API.
-
-*** Код как коллекции
-
-В CLJS код — не текст, а коллекции. Цитирование (quote) позволяет манипулировать, eval — выполнять.
+*** Код как данные
+В ClojureScript можно манипулировать кодом как обычными данными:
 
 #+begin_src clojure
-;; Данные
-[1 2 3]
-{:name "John"}
+;; Код как данные
+(def code '(+ 1 2))         ; list без выполнения
+(eval code)                ; => 3
 
-;; Код как коллекции
-'(+ 1 2 3)  ; list (quote не eval'ит)
-(eval '(+ 1 2 3))  ; => 6
-
-;; Манипуляция
-(def code '(+ 1 2))
-(conj code 3)  ; => (+ 1 2 3)
-(eval (conj code 3))  ; => 6
+;; Манипуляция кодом
+(conj code 3)               ; => (+ 1 2 3)
+(eval (conj code 3))        ; => 6
 #+end_src
 
-#+begin_src javascript
-// JS: Код как текст (AST через Babel — не нативно)
-const codeStr = "(a, b) => a + b";  // строка
-const ast = babel.parse(codeStr);  // парсинг в объект
-ast.program.body[0].expression.params.push({type: 'Identifier', name: 'c'});  // сложная манипуляция
-const newCode = babel.generate(ast).code;  // "(a, b, c) => a + b"
-eval(newCode);  // выполнение (рискованно)
-#+end_src
-
-В JS манипуляция требует внешних инструментов. В CLJS — нативно, безопасно в REPL.
-
-*** Data-driven UI: Применение для фронтенда
-
-Гомоиконность позволяет генерировать UI из данных, трансформировать как коллекции. Нет разделения template/logic.
-
-**** Hiccup: UI как вектор (vs JSX)
+** Data-driven подход к UI
+Hiccup представляет UI как обычные векторы данных:
 
 #+begin_src clojure
-;; Hiccup — вектор
-[:div {:class "container"} [:h1 "Title"] [:p "Content"]]
-
-;; Трансформация данных
-(defn add-class [hiccup cls]
-  (if (= :div (first hiccup)) (update hiccup 1 assoc :class cls) hiccup))
-
-(add-class [:div "Hello"] "highlight")  ; => [:div {:class "highlight"} "Hello"]
-#+end_src
-
-#+begin_src javascript
-// JSX — сахар (компиляция в createElement)
-const element = <div className="container"><h1>Title</h1></div>;  // не данные
-
-// Data-driven в JS: Объекты + manual render
-const uiObj = {type: 'div', props: {className: 'container'}, children: [{type: 'h1', children: 'Title'}]};
-function transform(ui) { if (ui.type === 'div') ui.props.className += ' highlight'; return React.createElement(ui.type, ui.props, ui.children); }  ; verbose, mutable
-#+end_src
-
-**** Динамическая генерация UI
-
-#+begin_src clojure
-(def menu [{:label "Home" :url "/"} {:label "About" :url "/about"}])
-
-(defn nav [] [:nav (for [item menu] [:a {:href (:url item)} (:label item)])])
-; => [:nav [:a {:href "/"} "Home"] ...] — map/for на данных
-#+end_src
-
-#+begin_src javascript
-// JS: Map к JSX, но объекты mutable
-const menu = [{label: 'Home', url: '/'} , {label: 'About', url: '/about'}];
-const nav = <nav>{menu.map(item => <a href={item.url}>{item.label}</a>)}</nav>;  ; compile-time, no transform как данные
-#+end_src
-
-**** Макросы: Генерация кода из данных
-
-#+begin_src clojure
-(defmacro when-let [binding & body]
-  `(let [val# ~(second binding)]  ; ~ вставляет данные
-     (when val# (let [~(first binding) val#] ~@body))))  ; код как коллекции
-
-(when-let [user (get-user)] (greet user))  ; генерирует let/when без boilerplate
-#+end_src
-
-#+begin_src javascript
-// JS: Нет native; Babel plugin для gen (compile-time)
-const whenLetCode = `if (user) { greet(user); }`;  ; строки, no REPL-manip
-#+end_src
-
-*** Преимущества для фронтенда
-
-| Проблема в JS/TS                | Решение в CLJS (data-driven)                            |
-| Mutable UI-объекты (spread)     | Immutable векторы: assoc-in/transform uniform.          |
-| Разделение template/logic (Vue) | UI=функции данных: (defn comp [data] [:div data.name]). |
-| Code gen (Babel)                | Макросы/eval: REPL манипулирует кодом live.             |
-
-*** Демо: Data-driven UI из API
-
-#+begin_src clojure
-(def api {:type :form :fields [{:type :text :label "Name"} {:type :submit :label "Send"}]})
-
-(defn render-field [f] (case (:type f) :text [:input {:placeholder (:label f)}] :submit [:button (:label f)]))
-
-(render-form api)  ; map/case на данных → Hiccup
-; => [:form [:input {:placeholder "Name"}] [:button "Send"]]
-#+end_src
-
-#+begin_src javascript
-// JS: Switch на объектах + manual render
-const api = {type: 'form', fields: [{type: 'text', label: 'Name'}, {type: 'submit', label: 'Send'}]};
-function renderField(f) { switch (f.type) { case 'text': return <input placeholder={f.label} />; case 'submit': return <button>{f.label}</button>; } }
-const form = <form>{api.fields.map(renderField)}</form>;  ; verbose, no uniform transform
-#+end_src
-
-В React/Vue: if/switch + registry — многословно.
-
-*** Ключевой инсайт
-
-В JavaScript: Код=текст (парсинг в AST), данные=объекты (mutable, разные ops), UI=JSX (компиляция). Data-driven — manual (lodash).  
-В ClojureScript: Всё=коллекции (immutable, uniform). Data-driven нативно: UI/код трансформируются как данные, REPL eval'ит всё. Для фронтенда: Генерация UI из API тривиальна, без boilerplate.
-
-** Структуры данных: Основа для UI и управления состоянием
-Структуры данных в CLJS — это persistent коллекции с нативной поддержкой путей. Они решают ключевые проблемы React/Vue: обновление вложенного состояния и предсказуемая реактивность через structural sharing [[https://clojure.org/reference/data_structures][Clojure collections support efficient 'modified' versions via structural sharing]].
-
-*** Почему векторы подходят для создания UI в Hiccup?
-Векторы — это упорядоченные списки, удобные для вложенных структур. В Hiccup вектор описывает элемент: первый элемент — тег, второй (если есть) — атрибуты (как словарь), остальное — дочерние элементы. Это позволяет манипулировать UI как обычными данными.
-
-#+begin_src clojure
-;; Простой UI как обычные данные
 [:div {:class "container"}
   [:h1 "Заголовок"]
-  [:ul
-    (for [item items] [:li (:name item)])]]  ; рендер на основе данных
-
-;; Изменение: добавляем класс ко всем div (создаёт новую копию, оригинал не меняется)
-(update-in ui [0 1 :class] #(str % " highlight"))  ; всего одна строка
+  [:p "Содержание"]]
 #+end_src
 
-#+begin_src javascript
-;; В React/JSX: spread создаёт shallow копию, для вложенных нужно повторять (официально: "use it more than once for nested")
-const ui = {type: 'div', props: {className: 'container'}, children: [{type: 'h1', children: 'Заголовок'}]};
-const updated = {...ui, props: {...ui.props, className: ui.props.className + ' highlight'}};  ; verbose для nested
-#+end_src
+Это позволяет:
+- Трансформировать UI как данные
+- Генерировать интерфейсы из API
+- Тестировать UI в REPL
 
-**** Сравнение Hiccup и JSX
-| Аспект          | Hiccup (CLJS)                          | JSX (React/Vue)                  |
-|-----------------|----------------------------------------|----------------------------------|
-| Формат          | Обычные векторы (как данные)           | Специальный синтаксис (нужна компиляция) |
-| Изменения       | Унифицированные операции (assoc-in/update) | Копирование вручную (spread, легко ошибиться в nested) |
-| Работа с вложенностью | Встроенная (get-in/assoc-in по путям) | Библиотеки вроде lodash (дополнительно) |
-| Скорость        | Структурное разделение (эффективные копии) | Нужно вручную оптимизировать (memo) |
-
-*** Вложенность и неизменяемость: Как упростить работу с глубоким состоянием
-Коллекции CLJS созданы для глубоких структур — в них встроена работа с путями, и данные нельзя случайно изменить. В React spread для nested требует цепочки копий [[https://react.dev/learn/updating-objects-in-state][State can hold any kind of JavaScript value, but you shouldn't change objects directly]]; в Vue деструктуризация reactive объектов теряет реактивность (нужен toRefs) [[https://vuejs.org/guide/extras/reactivity-transform.html][It's easy to lose reactivity when destructuring reactive objects]].
-
-#+begin_src clojure
-(def state {:user {:profile {:address {:city "Москва" :settings {:theme "dark"}}}}})
-
-;; Доступ и обновление по пути (решает проблему глубокого состояния)
-(get-in state [:user :profile :address :city])  ; "Москва"
-(update-in state [:user :profile :address :city] str/upper-case)  ; новая версия, оригинал остался прежним
-
-;; Обновление состояния в UI
-(defonce app-state (r/atom initial-state))
- (swap! app-state assoc-in [:user :profile :settings :theme] :dark)  ; реактивно, без устаревших значений
-#+end_src
-
-*** Всё неизменяемое (immutable)
-В CLJS все коллекции неизменяемые: операции вроде assoc создают новую версию, оригинал остаётся нетронутым. Это предотвращает случайные мутации, которые часто вызывают баги в React/Vue.
+** Неизменяемость и структурное разделение
+Все коллекции в ClojureScript неизменяемые по умолчанию. Операции создают новые версии через structural sharing:
 
 #+begin_src clojure
 (def data {:count 0})
+(def updated (assoc data :count 1))  ; новая версия
 
-;; Не изменяет оригинал
-(assoc data :count 1)
-
-data  ; => {:count 0}  (не изменился!)
-
-;; Создаёт новую версию
-(def updated (assoc data :count 1))
+data       ; => {:count 0}  (не изменился)
+updated    ; => {:count 1}
 #+end_src
 
-**** Релевантный пример: Обновление UI-state без мутации
-Представьте счётчик в UI: в CLJS атом хранит immutable map, swap! создаёт новую версию — UI перерендерится только где нужно (благодаря structural sharing).
+** Преимущества для фронтенда
+- Простота обновления вложенного состояния через *get-in/assoc-in*
+- Предсказуемая производительность через сравнение по ссылке
+- Естественная работа с данными без дополнительного состояния
+* Синтаксический сахар и возможности языка
+** Деструктуризация
+ClojureScript поддерживает мощную деструктуризацию для удобной работы со структурами данных.
 
-#+begin_src clojure
-(defonce counter-atom (r/atom {:count 0 :label "Счётчик"}))
-
-(defn counter-ui []
-  [:div
-   [:p "Значение: " (:count @counter-atom)]
-   [:button {:on-click #(swap! counter-atom update :count inc)} "Увеличить"]])
-
-;; Обновление: новая map, но старая часть shared (эффективно)
-(swap! counter-atom assoc :label "Новый лейбл")  ; count не копируется заново
-#+end_src
-
-#+begin_src javascript
-// В React: setState с объектом — легко мутировать случайно
-const [state, setState] = useState({count: 0, label: 'Счётчик'});
-const increment = () => setState({...state, count: state.count + 1});  // shallow copy, nested бы сломалось
-
-// Ошибка: если забыть spread — мутация!
-state.label = 'Мутация';  // Баг! State изменился глобально
-#+end_src
-
-Это делает state management предсказуемым: нет side-effects от мутаций, производительность выше за счёт sharing (только изменённые пути копируются).
-
-#+begin_src javascript
-;; В React: Цепочка spread для 5 уровней — 10+ строк, "React not oriented for nested states" [[https://stackoverflow.com/questions/43040721/how-to-update-nested-state-properties-in-react][The idea is to create a dummy object, perform operations, then replace state]]
-const newState = {
-  ...state,
-  user: {
-    ...state.user,
-    profile: {
-      ...state.user.profile,
-      address: {
-        ...state.user.profile.address,
-        city: state.user.profile.address.city.toUpperCase()
-      }
-    }
-  }
-};  ; Легко пропустить — данные сломаются!
-
-;; В Vue: Деструктуризация ломает reactive, "use toRefs to preserve reactivity" [[https://vuejs.org/guide/extras/reactivity-transform.html][It's easy to lose reactivity when destructuring reactive objects]]
-const { city } = reactiveState.address;  // reactivity lost
-#+end_src
-
-*** Демо: Преобразование данных из API для UI
-#+begin_src clojure
-(def api-response
-  [{:id 1 :name "john" :active true :tags ["vip" "new"]}
-   {:id 2 :name "jane" :active false :tags ["vip"]}])
-
-;; Цепочка операций: фильтр, преобразование, создание UI (threading, ключевые слова как функции)
-(->> api-response
-     (filter :active)
-     (map (juxt :id (comp str/upper-case :name)))  ; [id имя-вверхнем-регистре]
-     (mapcat (fn [[id name]] [[:tr {:key id}][:td name]]))  ; строки таблицы
-     (into [:table]))  ; данные → готовый UI, всё унифицировано
-;; => [:table [:tr {:key 1} [:td "JOHN"]]]  ; Hiccup готов к рендеру!
-#+end_src
-
-#+begin_src javascript
-;; В JS: Цепочка работает, но с объектами (можно сломать), нет встроенных путей
-apiResponse
-  .filter(u => u.active)
-  .map(u => ({id: u.id, name: u.name.toUpperCase()}))
-  .map(({id, name}) => <tr key={id}><td>{name}</td></tr>);  // Смешано с JSX, преобразования не такие простые
-#+end_src
-
-*** Ключевой вывод для фронтенда
-| Проблема в JS/TS + React/Vue | Решение в CLJS (неизменяемые структуры) |
-|------------------------------|-----------------------------------------|
-| Состояние меняется случайно → баги и тормоза | Неизменяемость: assoc-in создаёт дешёвую копию (structural sharing) |
-| Сравнение глубоких данных дорогое | Сравнение по ссылке (быстрое) — рендер только где нужно |
-| Нет простого доступа по путям | get-in/assoc-in: обновления вложенного в одну строку |
-| Данные и UI разделены | Hiccup = данные: меняй как коллекции, тестируй в REPL |
-
-Это упрощает управление состоянием (атомы + пути), сокращает лишний код на 50-70% и ускоряет разработку (не нужно следить за неизменяемостью вручную).
-
-*** Источники
-- [[https://clojure.org/reference/data_structures][Clojure: Data Structures]] — Все коллекции immutable и persistent с efficient structural sharing.
-- [[https://spin.atomicobject.com/2013/07/23/homoiconicity-clojure-macros/][Atomic Object: Homoiconicity]] — Lisps homoiconic: код кодируется как структуры данных.
-- [[https://react.dev/learn/updating-objects-in-state][React: Updating Objects in State]] — Нельзя изменять объекты в state напрямую, нужны копии.
-- [[https://stackoverflow.com/questions/43040721/how-to-update-nested-state-properties-in-react][SO: Nested State in React]] — React не ориентирован на вложенные состояния, решения — костыли.
-- [[https://vuejs.org/guide/extras/reactivity-transform.html][Vue: Reactivity Transform]] — Деструктуризация легко теряет реактивность, нужен toRefs.
-- [[https://vuejs.org/guide/extras/reactivity-in-depth.html][Vue: Reactivity in Depth]] — Доступ к свойству reactive объекта через локальную переменную non-reactive.
-
-* Основные проблемы и решения
-** Проблема 1: Обновление вложенного состояния
-*** Проблема в React
-- Spread operator hell
-- Многословно и подвержено ошибкам
-- Легко забыть про immutability
-
-*** Проблема в Vue
-- Реактивность ломается с динамическими свойствами
-- Ограничения Proxy
-- Путаница ref vs reactive
-
-*** Решение в CLJS
-- =assoc-in= / =update-in= / =get-in=
-- Обновление по пути
-- Всегда immutable, сломать нельзя
-
-*** Демо
-- Показать обновление состояния с 5 уровнями вложенности
-- React: 15+ строк spread операторов
-- Vue: footguns с реактивностью
-- CLJS: 1 строка =assoc-in=
-
-** Проблема 2: useEffect Dependency Hell
-*** Проблема в React
-- Stale closures из-за неправильных dependency array [[https://tkdodo.eu/blog/hooks-dependencies-and-stale-closures][Missing dependencies cause stale data from previous renders]]
-- useCallback/useMemo повсюду для оптимизации [[https://imgeorgemor.medium.com/dont-get-fooled-by-usememo-and-usecallback-and-avoid-unnecessary-optimizations-2e7e854b487c][Most of the time you don't need any optimization built-in hook]]
-- Бесконечные циклы при неправильных зависимостях
-
-*** Проблема в Vue
-- watch vs watchEffect vs computed путаница
-- Ручное отслеживание зависимостей
-- Сложная очистка
-
-*** Решение в CLJS
-- add-watch без closures [[https://clojure.org/reference/atoms][Atoms provide a mechanism for managing shared, synchronous, independent state]]
-- Atoms реактивны по дизайну
-- Нет массивов зависимостей
-- Невозможны stale values
-
-*** Демо
-- WebSocket подключение с обновлением state
-- Показать stale closure баг в React
-- Показать простоту add-watch в CLJS
-
-** Проблема 3: Vue3 Reactivity Footguns
-*** Проблема в Vue
-- Деструктуризация ломает реактивность
-- Костыли с =toRefs=
-- Путаница с ref.value
-- Проблемы с динамическими свойствами
-
-*** Решение в CLJS
-- Неизменяемые данные
-- Реактивность нельзя сломать
-- Одна модель: atoms
-- Консистентное поведение
-
-*** Демо
-- Деструктурировать Vue reactive объект → ломается
-- То же в CLJS → работает, потому что immutable
-
-** Проблема 4: Performance и Memo Hell
-*** Проблема в React
-- Ручной memo() везде [[https://react.dev/reference/react/memo][If there is no perceptible lag, memo is completely useless]]
-- useMemo для каждого вычисления [[https://www.reddit.com/r/reactjs/comments/17yxuin/how_often_to_use_usecallbackusecallback/][Overuse of useCallback causes more performance problems than it saves]]
-- Проверки reference equality вручную
-
-*** Проблема в Vue
-- computed vs methods непонятно
-- Overhead реактивности
-- Ручная оптимизация
-
-*** Решение в CLJS
-- Structural sharing [[https://clojure.org/reference/data_structures][Persistent data structures utilize structural sharing for efficiency]]
-- identical? pointer comparison
-- Автоматический shouldComponentUpdate
-- Без ручной оптимизации
-
-*** Демо
-- Рендеринг большого списка
-- React: нужен memo/useMemo
-- CLJS: просто работает быстро
-
-** Проблема 5: Runtime Validation
-*** Проблема TypeScript
-- Типы стираются при выполнении
-- API возвращает неверную структуру → crash
-- Нет runtime guards
-- Нужны внешние библиотеки (Zod, io-ts) [[https://zod.dev/][TypeScript-first schema validation with static type inference]]
-
-*** Решение в CLJS
-- clojure.spec встроенный [[https://clojure.org/guides/spec][Spec library specifies the structure of data, validates or conforms it]]
-- malli для продвинутых случаев [[https://github.com/metosin/malli][High-performance data-driven data specification library]]
-- Runtime validation по умолчанию
-- Детальные сообщения об ошибках
-
-*** Демо
-- TS interface проходит, runtime падает
-- CLJS spec ловит на runtime
-
-** Проблема 6: Shared Code (Frontend/Backend)
-*** Проблема JS/TS
-- Дублирование определения типов
-- Сложность monorepo
-- Ручная синхронизация моделей
-- Проблемы с сериализацией
-
-*** Решение в CLJS
-- =.cljc= файлы
-- Одна схема валидации
-- Одна модель данных
-- EDN сериализация
-
-*** Демо
-- Показать .cljc файл используемый и на фронте и на бэке
-- Валидация работает с обеих сторон
-- Нет дублирования
-
-* Синтаксический сахар и фичи языка
-** Продвинутая деструктуризация
-ClojureScript поддерживает мощную деструктуризацию с вложенными паттернами, значениями по умолчанию и rest-параметрами [[https://clojure.org/guides/destructuring][Associative destructuring also works with lists or sequences of key-value pairs]]
-
-*** Базовая
+*** Базовая деструктуризация
 #+begin_src clojure
 (let [{:keys [name age]} user]
-  (str name " is " age))
+  (str name " возраст " age))
 #+end_src
 
-*** Вложенная
+*** Вложенная деструктуризация
 #+begin_src clojure
 (let [{{:keys [street city]} :address} user]
   (str street ", " city))
 #+end_src
 
-*** Со значениями по умолчанию
+*** Значения по умолчанию
 #+begin_src clojure
 (let [{:keys [name age]
        :or {age 18}} user]
-  ...)
+  (str name " возраст " age))
 #+end_src
 
-*** Rest/As
-#+begin_src clojure
-(let [{:keys [id] :as user} data]
-  ...)
-#+end_src
-
-** Threading Macros
-Threading macros трансформируют вложенные вызовы в линейные потоки данных, улучшая читаемость [[https://clojure.org/guides/threading_macros][This is repeated at each subsequent step with the result inserted as the first argument]]
+** Threading macros
+Трединг макросы преобразуют вложенные вызовы в линейные потоки данных.
 
 *** Thread-first (->)
+Подставляет результат как первый аргумент:
 #+begin_src clojure
-(-> data
-    (filter active?)
-    (map :name)
-    (take 5))
+(-> user
+    :profile
+    :settings
+    :theme)
 #+end_src
 
 *** Thread-last (->>)
+Подставляет результат как последний аргумент:
 #+begin_src clojure
 (->> users
      (filter :active)
-     (map process)
-     (reduce combine))
+     (map :name)
+     (take 5))
 #+end_src
 
-*** Some-> (безопасный для nil)
+*** Безопасная навигация (some->)
+Не выполняется если промежуточный результат nil:
 #+begin_src clojure
 (some-> user
         :address
@@ -549,30 +197,32 @@ Threading macros трансформируют вложенные вызовы в
 #+end_src
 
 ** Композиция функций
-comp создаёт конвейер функций, partial — каррирование. Оба подхода нативны, без лишнего синтаксиса [[http://blog.jayfields.com/2011/01/clojure-partial-and-comp.html][comp function takes a variable number of functions and returns a composition]]
+Встроенные средства для композиции функций.
 
-*** comp
+*** Композиция через comp
 #+begin_src clojure
-(def process
+(def process-user
   (comp validate
         transform
         sanitize))
 #+end_src
 
-*** partial
+*** Частичное применение через partial
 #+begin_src clojure
-(def add-10 (partial + 10))
-(add-10 5) ; => 15
+(def add-vat (partial + 0.2))
+(add-vat 100)  ; => 120
 #+end_src
 
-*** Сравнение с JS
+** Сравнение с JavaScript
 #+begin_src javascript
 // JavaScript
 data.filter(x => x.active)
     .map(x => x.name)
     .slice(0, 5)
+#+end_src
 
-// vs CLJS
+#+begin_src clojure
+;; ClojureScript
 (->> data
      (filter :active)
      (map :name)
@@ -580,24 +230,32 @@ data.filter(x => x.active)
 #+end_src
 
 * REPL-Driven Development
-** Workflow
-REPL устраняет цикл компиляции-запуска-отладки: функция пишется, выполняется мгновенно, тестируется с реальными данными [[https://clojurescript.org/reference/repl][One of the reasons that Clojure rocks is that it has a REPL which gives developers the most immediate feedback]]
+** История и философия REPL
+REPL (Read-Eval-Print Loop) происходит из традиций Lisp, созданных Джоном Маккарти в 1958 году [[https://en.wikipedia.org/wiki/REPL][REPL: Wikipedia]].
 
-1. Написать функцию
-2. Eval в REPL сразу
-3. Тестировать с реальными данными
-4. Итерировать без reload
+Эта концепция интерактивной разработки стала отличительной чертой всех Lisp-диалектов. Clojure продолжил эту традицию с nREPL (сетевой REPL) в 2007 году [[https://nrepl.org/][nREPL: a networked REPL for Clojure]], а ClojureScript адаптировал REPL для браузерной среды, позволяя интерактивно работать с DOM и состоянием приложения в реальном времени [[https://clojurescript.org/reference/repl][ClojureScript REPL]].
 
-** Процесс демо
-- Запустить REPL
-- Определить функцию
-- Вызвать с тестовыми данными
-- Фиксить баги на лету
-- Без перезагрузки браузера
+** Как работает REPL в ClojureScript
+Основной цикл REPL:
+1. *Read* — чтение и парсинг выражения
+2. *Eval* — выполнение кода с сохранением состояния
+3. *Print* — вывод результата
+4. *Loop* — возврат к началу для следующей команды
 
-** tap> debugging
-tap> отправляет данные в REPL для потоковой отладки без console.log [[https://clojurescript.org/guides/faq-js][Macros help you debug without inserting console.log calls]]
+В отличие от JavaScript консоли браузера, REPL позволяет:
+- Сохранять определения между выполнениями
+- Работать с пространствами имён
+- Использовать полноценные отладочные инструменты
 
+** Практический workflow
+1. Запустить REPL сервер
+2. Подключиться к нему из редактора
+3. Написать функцию и выполнить её немедленно
+4. Протестировать с реальными данными
+5. Итерировать без перезагрузки браузера
+
+** Отладка с tap>
+tap> отправляет данные в REPL для потоковой отладки без лишних console.log:
 #+begin_src clojure
 (defn process [data]
   (tap> {:input data})
@@ -606,207 +264,84 @@ tap> отправляет данные в REPL для потоковой отл�
     result))
 #+end_src
 
-** Преимущества
-- Мгновенная обратная связь [[https://blog.jakubholy.net/2017/12/21/experience-awesome-productivity-with-clojurescripts-repl/][The cycle of problem discovery - troubleshooting - fix is much shorter thanks to the REPL]]
-- Нет цикла compile-run-debug
-- Сохранение состояния
-- Интерактивное исследование
+** Преимущества подхода
+- Мгновенная обратная связь без пересборки
+- Сохранение состояния между изменениями кода
+- Возможность исследования данных в реальном времени
+- Естественная среда для прототипирования
+* Интероп с JavaScript
+** Использование npm пакетов
+ClojureScript может напрямую использовать любые npm пакеты:
 
-* Bootstrap проект
-** Шаги настройки
-shadow-cljs обеспечивает простую настройку ClojureScript проектов с npm интеграцией [[https://shadow-cljs.github.io/docs/UsersGuide.html][It is recommended to use the npm package as that provides a more optimized development experience]]
-
-1. =npm install=
-2. =npx shadow-cljs watch app=
-3. Открыть http://localhost:3000
-
-** Структура проекта
-#+begin_src
-bootstrap/
-├── shadow-cljs.edn    ; Конфиг сборки
-├── package.json        ; npm зависимости
-├── deps.edn           ; Clojure зависимости
-└── src/
-    ├── app/
-    │   └── core.cljs  ; Точка входа
-    └── shared/        ; Общий код
-#+end_src
-
-** Hello World
-Reagent предоставляет минималистичный интерфейс между ClojureScript и React [[https://reagent-project.github.io/][Reagent provides a minimalistic interface between ClojureScript and React]]
-
-#+begin_src clojure
-(ns app.core
-  (:require [reagent.core :as r]
-            [reagent.dom :as rdom]))
-
-(defn app []
-  [:div
-   [:h1 "Hello ClojureScript"]
-   [:p "Добро пожаловать в REPL-driven development"]])
-
-(defn mount []
-  (rdom/render [app]
-               (.getElementById js/document "app")))
-
-(defn ^:dev/after-load reload []
-  (mount))
-
-(mount)
-#+end_src
-
-** Пример Counter
-#+begin_src clojure
-(defonce counter (r/atom 0))
-
-(defn counter-component []
-  [:div
-   [:h2 "Count: " @counter]
-   [:button {:on-click #(swap! counter inc)} "Increment"]
-   [:button {:on-click #(swap! counter dec)} "Decrement"]
-   [:button {:on-click #(reset! counter 0)} "Reset"]])
-#+end_src
-
-** Hot Reload
-- defonce сохраняет состояние при hot reload [[https://code.thheller.com/blog/shadow-cljs/2019/08/25/hot-reload-in-clojurescript.html][The REPL allows for much finer grained control over this entire process]]
-- Функции перезагружаются автоматически
-- Не нужен refresh
-- State переживает изменения кода
-
-* Live Coding сессия
-** Задача: Построить простое TODO приложение
-*** Требования
-- Добавить todo
-- Toggle complete
-- Фильтр (all/active/completed)
-- Удалить todo
-
-*** Этапы реализации
-1. Определить state atom
-2. Создать input компонент
-3. Создать todo list компонент
-4. Добавить логику фильтрации
-5. Продемонстрировать REPL workflow
-
-*** Ключевые моменты для показа
-- State management с atoms
-- Композиция компонентов
-- Нет props drilling (глобальный state)
-- Hot reload в действии
-- REPL debugging
-
-** Сравнение с React/Vue
-- Показать эквивалентный React код (многословный)
-- Показать эквивалентный Vue код (проблемы с реактивностью)
-- Подчеркнуть простоту CLJS
-
-* Демо интеропа
-** Использование React библиотеки (Material-UI)
 #+begin_src clojure
 (:require ["@mui/material" :refer [Button TextField]])
 
 (defn form []
   [:div
-   [:> TextField {:label "Name"
+   [:> TextField {:label "Имя"
                   :value @name
                   :on-change #(reset! name (.. % -target -value))}]
    [:> Button {:variant "contained"
                :on-click submit}
-    "Submit"]])
+    "Отправить"]])
 #+end_src
 
-** Паттерн Wrapper
+** Паттерн обёртки (wrapper)
+Для удобного использования JS библиотек создаются обёртки:
+
 #+begin_src clojure
 (defn mui-button [props & children]
   (into [:> Button (clj->js props)] children))
 
-;; Использование
+;; Использование обёртки
 [mui-button {:variant "contained"
              :on-click handle-click}
- "Click me"]
+ "Нажми меня"]
 #+end_src
 
-** npm интеграция
-- Все npm пакеты работают
-- Синтаксис =:require= для импортов
-- =clj->js= для конвертации данных
-- =js->clj= для получения данных
+** Конвертация данных
+Для работы между ClojureScript и JavaScript используются функции конвертации:
 
-* Ключевые выводы
-** Преимущества языка
-- Immutability по умолчанию [[https://clojure.org/reference/data_structures][All of the Clojure collections are immutable and persistent]]
-- Простой синтаксис (меньше концепций чем в React/Vue)
-- Мощная деструктуризация [[https://clojure.org/guides/destructuring][Associative destructuring works with lists or sequences of key-value pairs]]
-- Threading macros для читаемости [[https://clojure.org/guides/threading_macros][Threading macros improve readability by inserting results as first argument]]
-- REPL-driven development [[https://clojurescript.org/reference/repl][REPL gives developers the most immediate feedback]]
+- *clj->js* — преобразует ClojureScript структуры в JavaScript
+- *js->clj* — преобразует JavaScript объекты в ClojureScript структуры
 
-** Производительность
-- Structural sharing (автоматическая оптимизация) [[https://clojure.org/reference/data_structures][Persistent data structures utilize structural sharing for efficiency]]
-- Не нужен ручной memo [[https://www.reddit.com/r/reactjs/comments/17yxuin/how_often_to_use_usecallbackusecallback/][Overuse of useCallback causes more performance problems than it saves]]
-- Эффективное определение изменений через identical?
-- Быстрый запуск с advanced compilation [[https://clojurescript.org/reference/advanced-compilation][Emits JavaScript code compatible with advanced compilation mode of Google Closure]]
+** Интеграция с npm
+Все современные npm пакеты работают в ClojureScript:
+- Импорт через синтаксис *:require*
+- Автоматическая обработка зависимостей
+- Поддержка tree-shaking и оптимизации
 
-** Developer Experience
-- Hot reload без потери state [[https://code.thheller.com/blog/shadow-cljs/2019/08/25/hot-reload-in-clojurescript.html][The REPL allows for much finer grained control over the entire process]]
-- Интерактивная разработка (REPL) [[https://blog.jakubholy.net/2017/12/21/experience-awesome-productivity-with-clojurescripts-repl/][The cycle of problem discovery - troubleshooting - fix is much shorter]]
-- Time-travel debugging (re-frame)
-- Меньше boilerplate
+* Сборщики проектов
+** shadow-cljs
+Создан Томасом Хеллером в 2017 году, стал стандартом для современной ClojureScript разработки [[https://shadow-cljs.github.io/docs/UsersGuide.html][shadow-cljs: User's Guide]].
+*** Возможности
+- Простая настройка проектов
+- Бесшовная интеграция с npm экосистемой
+- Быстрые инкрементальные сборки
+- Надёжное кэширование
+- Поддержка ES модулей
 
-** Экосистема
-- shadow-cljs (современный build tool) [[https://shadow-cljs.github.io/docs/UsersGuide.html][Provides a more optimized development experience tailored towards CLJS development]]
-- Reagent (минималистичная обёртка React) [[https://reagent-project.github.io/][Provides a minimalistic interface between ClojureScript and React]]
-- re-frame (state management)
-- Полный npm interop
-
-** Production Ready
-- 18+ лет Clojure (стабильный)
-- Используют: Nubank (700+ Clojure programmers), Apple, Cisco, Walmart [[https://clojure.org/community/companies][Partial list of companies using Clojure or ClojureScript]]
-- Сильная обратная совместимость
-- Зрелый тулинг
-
-* Ресурсы и следующие шаги
-** Документация
-- https://clojurescript.org
-- https://reagent-project.github.io
-- https://day8.github.io/re-frame
-
-** Обучение
-- "Clojure for the Brave and True"
-- https://www.learn-clojurescript.com
-- Exercism.io Clojure track
-
-** Комьюнити
-- Clojurians Slack
-- /r/Clojure
-- ClojureVerse форум
-
-** Следующий воркшоп (W2)
-- Построить fullstack приложение-кинотеатр
-- WebSocket real-time sync
-- Shared validation (.cljc)
-- Интероп React библиотек
-- Production deployment
-
-* Сессия Q&A
-** Частые вопросы
-- TypeScript vs ClojureScript?
-- Вопросы bundle size?
-- Найм разработчиков?
-- Стратегия миграции?
-- Production готовность?
-
-** Обратиться к FAQ.md
-Все вопросы с ответами, реальными данными и статистикой
-
-* Домашняя работа (опционально)
-** Упражнения
-1. Расширить TODO app с localStorage persistence
-2. Добавить drag-and-drop переупорядочивание
-3. Интегрировать charting библиотеку (recharts)
-4. Построить калькулятор с REPL-driven подходом
-
-** Цели
-- Практика REPL workflow
-- Привыкнуть к синтаксису
-- Изучить interop
-- Построить мышечную память
+*** Преимущества
+- Минимальная конфигурация
+- Автоматическая обработка зависимостей
+- Интеграция с современными JavaScript инструментами
+** figwheel-main
+Развитие оригинального Figwheel Брюса Хаумана, начатого в 2014 года [[https://figwheel.org/][Figwheel: Live reloading for ClojureScript]].
+*** Особенности
+- Пионер live reloading в ClojureScript
+- Автоматическая перезагрузка кода в браузере
+- Сохранение состояния приложения между перезагрузками
+- Интеграция с REPL
+*** Сравнение с shadow-cljs
+figwheel делает акцент на разработке, shadow-cljs — на простоте настройки и npm интеграции.
+** Google Closure Compiler
+ClojureScript использует Google Closure Compiler для оптимизации кода [[https://developers.google.com/closure/compiler][Google Closure Compiler: Documentation]].
+*** Advanced compilation
+- Агрессивная минификация кода
+- Удаление неиспользуемого кода (dead code elimination)
+- Переименование переменных и функций
+- Оптимизация вызовов функций
+*** Преимущества
+- Создаёт очень компактные бандлы
+- Высокая производительность
+- Совместимость с современными браузерами
