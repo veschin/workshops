@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>d2lang: Практическое руководство</title>
+<meta name="author" content="veschin"/>
+<meta name="description" content=""/>
+<meta name="keywords" content=""/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.css"/>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js/dist/theme/white.css" id="theme"/>
+
+
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'https://cdn.jsdelivr.net/npm/reveal.js/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide"><h1 class="title">d2lang: Практическое руководство</h1><p class="subtitle"></p>
+<h2 class="author">veschin</h2><p class="date">Created: 2025-10-21 Tue 16:39</p>
+</section>
+<section>
+<section id="slide-orgdb6cc57">
+<h2 id="orgdb6cc57"><span class="section-number-2">1.</span> зачем нужны диаграммы</h2>
+<p>
+диаграммы показывают структуру процессов,<br />
+код - детали реализации.<br />
+</p>
+
+<p>
+d2 создает диаграммы через текстовый код, когда вы документируете<br />
+</p>
+<ul>
+<li>рабочие процессы<br /></li>
+<li>архитектуру<br /></li>
+<li>или бизнес-логику<br /></li>
+
+</ul>
+
+<p>
+визуальная схема экономит часы объяснений.<br />
+</p>
+</section>
+</section>
+<section>
+<section id="slide-org3045d30">
+<h2 id="org3045d30"><span class="section-number-2">2.</span> история текстовых диаграмм</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+</section>
+<section id="slide-orgd733ee2">
+<h3 id="orgd733ee2"><span class="section-number-3">2.1.</span> graphviz (1991)</h3>
+<div class="org-src-container">
+
+<pre  class="src src-plantuml"   ><code trim>digraph g {
+  a <span style="color: #6C757D; background-color: #F8F9FA;">-&gt;</span> b;
+  b <span style="color: #6C757D; background-color: #F8F9FA;">-&gt;</span> c;
+}
+</code></pre>
+</div>
+
+
+<div id="org48d0094" class="figure">
+<p><img src="./img/graphviz.png" alt="graphviz.png" /><br />
+</p>
+</div>
+</section>
+<section id="slide-org6932621">
+<h3 id="org6932621"><span class="section-number-3">2.2.</span> plantuml (2009)</h3>
+<div class="org-src-container">
+
+<pre  class="src src-plantuml"   ><code trim><span style="color: #6C757D; background-color: #F8F9FA;">@startuml</span>
+a <span style="color: #6C757D; background-color: #F8F9FA;">-&gt;</span> b
+b <span style="color: #6C757D; background-color: #F8F9FA;">-&gt;</span> c
+<span style="color: #6C757D; background-color: #F8F9FA;">@enduml</span>
+</code></pre>
+</div>
+
+
+<div id="org566adb3" class="figure">
+<p><img src="./img/plantuml.png" alt="plantuml.png" /><br />
+</p>
+</div>
+</section>
+<section id="slide-org1898566">
+<h3 id="org1898566"><span class="section-number-3">2.3.</span> mermaid.js (2014)</h3>
+<div class="org-src-container">
+
+<pre  class="src src-mermaid"   ><code trim>graph lr
+  a --&gt; b
+  b --&gt; c
+</code></pre>
+</div>
+
+<div id="org445da5b" class="figure">
+<p><img src="./img/mermaid.png" alt="mermaid.png" /><br />
+</p>
+</div>
+</section>
+<section id="slide-orgf21d4be">
+<h3 id="orgf21d4be"><span class="section-number-3">2.4.</span> d2lang (2022)</h3>
+<div class="org-src-container">
+
+<pre  class="src src-d2"   ><code trim>direction<span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> right
+a <span style="color: #ADB5BD; background-color: #F8F9FA;">-&gt;</span> b <span style="color: #ADB5BD; background-color: #F8F9FA;">-&gt;</span> c
+</code></pre>
+</div>
+
+
+<div id="org42a6a63" class="figure">
+<p><img src="./img/d2.png" alt="d2.png" /><br />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgc0ae2aa">
+<h2 id="orgc0ae2aa"><span class="section-number-2">3.</span> структура d2</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+</section>
+<section id="slide-org94f6685">
+<h3 id="org94f6685"><span class="section-number-3">3.1.</span> объекты</h3>
+<p>
+объект - базовый элемент диаграммы.<br />
+</p>
+
+<div class="org-src-container">
+
+<pre  class="src src-d2"   ><code trim><span style="color: #ADB5BD; background-color: #E9ECEF;"># &#1087;&#1088;&#1086;&#1089;&#1090;&#1086;&#1081; &#1086;&#1073;&#1098;&#1077;&#1082;&#1090;</span>
+server
+<span style="color: #ADB5BD; background-color: #E9ECEF;"># &#1089; &#1084;&#1077;&#1090;&#1082;&#1086;&#1081;</span>
+database<span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> <span style="color: #F8F9FA; background-color: #6C757D;">"postgresql\nprimary"</span>
+<span style="color: #ADB5BD; background-color: #E9ECEF;"># &#1089;&#1086; &#1089;&#1090;&#1080;&#1083;&#1077;&#1084;</span>
+api gateway<span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> <span style="color: #ADB5BD; background-color: #F8F9FA;">{</span>
+  <span style="color: #6C757D; background-color: #F8F9FA;">shape</span><span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> circle
+  style.fill<span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> <span style="color: #F8F9FA; background-color: #6C757D;">"#e1f5fe"</span>
+<span style="color: #ADB5BD; background-color: #F8F9FA;">}</span>
+</code></pre>
+</div>
+
+<div id="orgf19673f" class="figure">
+<p><img src="./img/d2-obj.png" alt="d2-obj.png" /><br />
+</p>
+</div>
+</section>
+<section id="slide-org50a74f6">
+<h3 id="org50a74f6"><span class="section-number-3">3.2.</span> связи</h3>
+<p>
+связь определяет отношения между объектами.<br />
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-d2"   ><code trim><span style="color: #ADB5BD; background-color: #E9ECEF;"># &#1087;&#1088;&#1086;&#1089;&#1090;&#1072;&#1103; &#1089;&#1074;&#1103;&#1079;&#1100;</span>
+frontend <span style="color: #ADB5BD; background-color: #F8F9FA;">-&gt;</span> backend
+<span style="color: #ADB5BD; background-color: #E9ECEF;"># &#1089; &#1084;&#1077;&#1090;&#1082;&#1086;&#1081;</span>
+user <span style="color: #ADB5BD; background-color: #F8F9FA;">-&gt;</span> auth<span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> <span style="color: #F8F9FA; background-color: #6C757D;">"login"</span>
+<span style="color: #ADB5BD; background-color: #E9ECEF;"># &#1089;&#1086; &#1089;&#1090;&#1080;&#1083;&#1077;&#1084;</span>
+service <span style="color: #ADB5BD; background-color: #F8F9FA;">-&gt;</span> db<span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> <span style="color: #ADB5BD; background-color: #F8F9FA;">{</span>style.stroke<span style="color: #ADB5BD; background-color: #F8F9FA;">-</span>dash<span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> <span style="color: #6C757D; background-color: #F8F9FA;">3</span><span style="color: #ADB5BD; background-color: #F8F9FA;">}</span>
+</code></pre>
+</div>
+
+<div id="org52d156c" class="figure">
+<p><img src="./img/d2-links.png" alt="d2-links.png" /><br />
+</p>
+</div>
+</section>
+<section id="slide-orgc8e86ae">
+<h3 id="orgc8e86ae"><span class="section-number-3">3.3.</span> контейнеры</h3>
+<p>
+группируют связанные объекты.<br />
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-d2"   ><code trim>cluster<span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> <span style="color: #ADB5BD; background-color: #F8F9FA;">{</span>
+  backend services
+  database
+<span style="color: #ADB5BD; background-color: #F8F9FA;">}</span>
+subgraph<span style="color: #ADB5BD; background-color: #F8F9FA;">:</span> <span style="color: #ADB5BD; background-color: #F8F9FA;">{</span>
+  gateway
+  auth service
+<span style="color: #ADB5BD; background-color: #F8F9FA;">}</span>
+cluster.database <span style="color: #ADB5BD; background-color: #F8F9FA;">-&gt;</span> subgraph.gateway
+</code></pre>
+</div>
+
+
+<div id="org68cc9e0" class="figure">
+<p><img src="./img/d2-containers.png" alt="d2-containers.png" /><br />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-org85e30a3">
+<h2 id="org85e30a3"><span class="section-number-2">4.</span> поддерживаемость</h2>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">аспект</th>
+<th scope="col" class="org-left">gui-driven</th>
+<th scope="col" class="org-left">code-driven</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">версионирование</td>
+<td class="org-left">бинарные файлы</td>
+<td class="org-left">код</td>
+</tr>
+
+<tr>
+<td class="org-left">история изменений</td>
+<td class="org-left">зависит от реализации</td>
+<td class="org-left">легкий commit history</td>
+</tr>
+
+<tr>
+<td class="org-left">откат изменений</td>
+<td class="org-left">зависит от реализации</td>
+<td class="org-left">git revert</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section>
+<section id="slide-orge993783">
+<h2 id="orge993783"><span class="section-number-2">5.</span> переиспользование</h2>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">аспект</th>
+<th scope="col" class="org-left">gui-driven</th>
+<th scope="col" class="org-left">code-driven</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">компоненты</td>
+<td class="org-left">копирование-вставка</td>
+<td class="org-left">копирование, наследование</td>
+</tr>
+
+<tr>
+<td class="org-left">стили</td>
+<td class="org-left">ручное применение</td>
+<td class="org-left">темы, wildcard</td>
+</tr>
+
+<tr>
+<td class="org-left">шаблоны</td>
+<td class="org-left">ограничены</td>
+<td class="org-left">библиотеки паттернов</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section>
+<section id="slide-orgb3fbad2">
+<h2 id="orgb3fbad2"><span class="section-number-2">6.</span> масштабирование</h2>
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-left" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">аспект</th>
+<th scope="col" class="org-left">gui-driven</th>
+<th scope="col" class="org-left">code-driven</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">размер холста</td>
+<td class="org-left">зависит от реализации</td>
+<td class="org-left">безграничный</td>
+</tr>
+
+<tr>
+<td class="org-left">авто-лейаут</td>
+<td class="org-left">ручной</td>
+<td class="org-left">автоматический</td>
+</tr>
+
+<tr>
+<td class="org-left">производительность</td>
+<td class="org-left">зависит от реализации</td>
+<td class="org-left">стабильная</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section>
+<section id="slide-org4739d18">
+<h2 id="org4739d18"><span class="section-number-2">7.</span> практические кейсы</h2>
+<div class="outline-text-2" id="text-7">
+</div>
+</section>
+<section id="slide-orgc02fd4f">
+<h3 id="orgc02fd4f"><span class="section-number-3">7.1.</span> erd для системы управления пользователями</h3>
+<p>
+таблицы с полями и связями:<br />
+</p>
+<ul>
+<li>users<br /></li>
+<li>roles<br /></li>
+<li>permissions<br /></li>
+
+<li>тип показывает структуру таблицы<br /></li>
+<li>стрелки указывают cardinality<br /></li>
+
+</ul>
+</section>
+<section id="slide-orgcc5715d">
+<h3 id="orgcc5715d"><span class="section-number-3">7.2.</span> sequence диаграмма бизнес-процесса</h3>
+<ul>
+<li>поток согласования документа через<br />
+<ul>
+<li>менеджера<br /></li>
+<li>юриста<br /></li>
+<li>директора<br /></li>
+
+</ul></li>
+<li>разные типы стрелок для синхронных/асинхронных шагов.<br /></li>
+<li>легко добавить новый этап согласования.<br /></li>
+
+</ul>
+</section>
+<section id="slide-org42f5781">
+<h3 id="org42f5781"><span class="section-number-3">7.3.</span> контекстная схема отдела</h3>
+<p>
+общая карта взаимодействий между отделами компании. разные формы для<br />
+</p>
+<ul>
+<li>департаментов<br /></li>
+<li>внешних подрядчиков<br /></li>
+<li>систем<br /></li>
+
+</ul>
+<p>
+цвета показывают тип взаимодействия<br />
+</p>
+</section>
+<section id="slide-orgf65e2d0">
+<h3 id="orgf65e2d0"><span class="section-number-3">7.4.</span> алгоритм обработки заказов</h3>
+<ul>
+<li>от создания до доставки.<br /></li>
+<li>группировка этапов<br /></li>
+<li>разные стили для ручных и автоматических операций<br /></li>
+<li>показывает узкие места и параллельные процессы<br /></li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-org89ba059">
+<h2 id="org89ba059"><span class="section-number-2">8.</span> преимущества d2</h2>
+<p>
+один язык для всех типов диаграмм, версионирование изменений,<br />
+автоматический лейаут, интеграция с markdown.<br />
+</p>
+</section>
+</section>
+<section>
+<section id="slide-org01fb656">
+<h2 id="org01fb656"><span class="section-number-2">9.</span> ограничения d2</h2>
+<p>
+нужно изучить синтаксис, меньше контроля над точным позиционированием,<br />
+сложнее совместное редактирование.<br />
+</p>
+</section>
+</section>
+<section>
+<section id="slide-org7d14157">
+<h2 id="org7d14157"><span class="section-number-2">10.</span> экосистема</h2>
+<p>
+vs code extension, интеграция с obsidian, cli для ci/cd, растущее<br />
+сообщество.<br />
+</p>
+</section>
+</section>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js/dist/reveal.js"></script>
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+// Optional libraries used to extend on reveal.js
+dependencies: [
+ { src: 'https://cdn.jsdelivr.net/npm/reveal.js/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'https://cdn.jsdelivr.net/npm/reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'https://cdn.jsdelivr.net/npm/reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+ { src: 'https://cdn.jsdelivr.net/npm/reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }]
+
+});
+
+</script>
+</body>
+</html>

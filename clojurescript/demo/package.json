@@ -1,0 +1,12 @@
+{
+  "name": "demo-reagent",
+  "version": "1.0.0",
+  "description": "ClojureScript Reagent Demo",
+  "scripts": {
+    "dev": "shadow-cljs watch app",
+    "release": "shadow-cljs release app"
+  },
+  "devDependencies": {
+    "shadow-cljs": "^2.25.8"
+  }
+}
